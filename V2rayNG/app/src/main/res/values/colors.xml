@@ -16,4 +16,16 @@
     <color name="colorBg">#FFFFFF</color>
     <color name="colorText">#000000</color>
     <color name="colorMainTestBg">#F0F1F6</color>
+
+    <color name="item_bg">#707070</color>
+    <color name="primaryYellow">#FFD438</color>
+    <color name="item_county">#FFFFFF</color>
+    <color name="base_bg">#2D2D2D</color>
+    <color name="serverlocation">#A8A6A6</color>
+
+    <color name="primaryGray">#2D2D2D</color>
+    <color name="colorTapConnect">#A8A6A6</color>
+    <color name="green">#02A406</color>
+
+    <color name="white">#FFFFFF</color>
 </resources>

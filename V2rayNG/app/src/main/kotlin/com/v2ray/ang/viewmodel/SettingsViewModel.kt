@@ -68,6 +68,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             AppConfig.PREF_PER_APP_PROXY_SET -> {
                 settingsStorage?.encode(key, sharedPreferences.getStringSet(key, setOf()))
             }
+            AppConfig.PREF_FRIST_RUN -> {
+                settingsStorage?.encode(key, sharedPreferences.getBoolean(key, true))
+            }
         }
     }
 }

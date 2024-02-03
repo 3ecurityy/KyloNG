@@ -14,6 +14,8 @@ object AppConfig {
     const val PREF_ROUTING_CUSTOM = "pref_routing_custom"
 
     // Preferences mapped to MMKV
+
+    const val PREF_FRIST_RUN = "firs_tun"
     const val PREF_MODE = "pref_mode"
     const val PREF_SPEED_ENABLED = "pref_speed_enabled"
     const val PREF_SNIFFING_ENABLED = "pref_sniffing_enabled"

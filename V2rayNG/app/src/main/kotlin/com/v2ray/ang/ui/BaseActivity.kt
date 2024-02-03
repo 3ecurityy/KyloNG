@@ -3,6 +3,7 @@ package com.v2ray.ang.ui
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -36,4 +37,6 @@ abstract class BaseActivity : AppCompatActivity() {
         }
         super.attachBaseContext(context)
     }
+
+
 }

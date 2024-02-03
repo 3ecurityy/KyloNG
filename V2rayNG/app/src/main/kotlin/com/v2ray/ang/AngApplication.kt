@@ -1,12 +1,19 @@
 package com.v2ray.ang
 
 import android.content.Context
+import android.util.Log
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.work.Configuration
 import com.tencent.mmkv.MMKV
 
-class AngApplication : MultiDexApplication(), Configuration.Provider {
+
+class AngApplication() : MultiDexApplication(),
+    Configuration.Provider {
+
+
     companion object {
         const val PREF_LAST_VERSION = "pref_last_version"
         lateinit var application: AngApplication
@@ -28,7 +35,7 @@ class AngApplication : MultiDexApplication(), Configuration.Provider {
         val defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         firstRun = defaultSharedPreferences.getInt(PREF_LAST_VERSION, 0) != BuildConfig.VERSION_CODE
         if (firstRun)
-            defaultSharedPreferences.edit().putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE).apply()
+            defaultSharedPreferences.edit().putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE).commit()
 
         //Logger.init().logLevel(if (BuildConfig.DEBUG) LogLevel.FULL else LogLevel.NONE)
         MMKV.initialize(this)

@@ -137,6 +137,7 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                     mActivity.startActivity(intent.setClass(mActivity, ServerActivity::class.java))
                 }
             }
+
             holder.itemMainBinding.layoutRemove.setOnClickListener {
                 if (guid != mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER)) {
                     if (settingsStorage?.decodeBool(AppConfig.PREF_CONFIRM_REMOVE) == true) {
@@ -160,13 +161,11 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                     }
                     notifyItemChanged(mActivity.mainViewModel.getPosition(guid))
                     if (isRunning) {
-                        mActivity.showCircle()
                         Utils.stopVService(mActivity)
                         Observable.timer(500, TimeUnit.MILLISECONDS)
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe {
                                     V2RayServiceManager.startV2Ray(mActivity)
-                                    mActivity.hideCircle()
                                 }
                     }
                 }
