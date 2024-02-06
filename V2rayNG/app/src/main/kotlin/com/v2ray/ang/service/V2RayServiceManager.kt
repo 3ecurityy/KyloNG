@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Resources
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
@@ -317,6 +319,16 @@ object V2RayServiceManager {
                 ""
             }
 
+
+        //Set Large Icon
+             /*   .setLargeIcon(
+                    BitmapFactory.decodeResource(
+                        Resources.getSystem(),
+                        R.drawable.ic_stat_name
+                    )
+                )*/
+
+
         mBuilder = NotificationCompat.Builder(service, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setContentTitle(currentConfig?.remarks)
@@ -365,9 +377,9 @@ object V2RayServiceManager {
             if (proxyTraffic < NOTIFICATION_ICON_THRESHOLD && directTraffic < NOTIFICATION_ICON_THRESHOLD) {
                 mBuilder?.setSmallIcon(R.drawable.ic_stat_name)
             } else if (proxyTraffic > directTraffic) {
-                mBuilder?.setSmallIcon(R.drawable.ic_stat_proxy)
+                mBuilder?.setSmallIcon(R.drawable.ic_stat_name)
             } else {
-                mBuilder?.setSmallIcon(R.drawable.ic_stat_direct)
+                mBuilder?.setSmallIcon(R.drawable.ic_stat_name)
             }
             mBuilder?.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             mBuilder?.setContentText(contentText) // Emui4.1 need content text even if style is set as BigTextStyle
