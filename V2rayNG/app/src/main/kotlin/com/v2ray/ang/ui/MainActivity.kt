@@ -31,7 +31,6 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.navigation.NavigationView
-import com.v2ray.ang.viewmodel.SubConfig
 import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
@@ -51,6 +50,7 @@ import com.v2ray.ang.util.MmkvManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.ConfigResponse
 import com.v2ray.ang.viewmodel.MainViewModel
+import com.v2ray.ang.viewmodel.SubConfig
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.observers.DisposableSingleObserver
@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 import me.drakeet.support.toast.ToastCompat
 import org.json.JSONObject
 import retrofit2.Response
+import rx.Completable
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import java.io.File
@@ -327,11 +328,10 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     fun initRecyclerview() {
-        Handler().postDelayed(
-            {
+        Completable.timer(400, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .subscribe {
                 binding.recyclerView.fadeVisibility(View.VISIBLE)
-            }, 400
-        )
+            }
 
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager =

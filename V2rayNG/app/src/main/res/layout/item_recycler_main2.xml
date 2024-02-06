@@ -17,13 +17,7 @@
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/tv_ping"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="ping "
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/img_country" />
+
 
         <ImageView
             android:id="@+id/img_country"
