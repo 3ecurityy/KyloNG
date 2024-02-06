@@ -13,7 +13,7 @@
     <TextView
         android:id="@+id/tv_kylo"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="24dp"
         android:fontFamily="@font/sniglet_regular"
@@ -24,43 +24,61 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
+        android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/free_shape"
-        android:text="Free"
-        android:layout_marginTop="-4dp"
-        android:gravity="center"
-        android:textSize="10sp"
         android:layout_marginLeft="6dp"
+        android:layout_marginTop="-4dp"
+        android:background="@drawable/free_shape"
         android:fontFamily="@font/roboto_condensed_bold"
-        android:textColor="@color/white"
+        android:gravity="center"
+        android:text="Free"
         android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="10sp"
         app:layout_constraintStart_toEndOf="@+id/tv_kylo"
         app:layout_constraintTop_toTopOf="@+id/tv_kylo" />
 
-    <ir.samanjafari.easycountdowntimer.EasyCountDownTextview
-        android:id="@+id/tv_timer_reward"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginEnd="16dp"
-        android:textSize="40sp"
-        app:colonColor="#000"
-        app:days="1"
-        app:daysLabel="D"
-        app:digitBackground="@android:color/transparent"
-
-        app:hours="0"
-
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/reward_shape"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingRight="12dp"
+        android:paddingLeft="12dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_kylo"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tv_kylo"
-        app:setAnimation="true"
-        app:showDays="false"
-        app:showHours="true"
-        app:start_automatically="false"
-        app:textColor="#9c9c9c"
-        app:textSize="12sp"
-        app:useFarsiNumeral="false" />
+        app:layout_constraintTop_toTopOf="@+id/tv_kylo">
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/gas_station"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_timer_reward"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="3dp"
+            android:fontFamily="@font/roboto_condensed_bold"
+            android:gravity="center"
+            android:text="1h 23m"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/imageView3"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     <TextView
         android:id="@+id/tv_location"
