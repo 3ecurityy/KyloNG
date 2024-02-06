@@ -24,7 +24,7 @@ class SplashActivity : BaseActivity() {
                 val i = Intent(this@SplashActivity, MainActivity::class.java)
                 startActivity(i)
                 finish()
-            }, 5 * 1000
+            }, 2 * 1000
         )
     }
 }
