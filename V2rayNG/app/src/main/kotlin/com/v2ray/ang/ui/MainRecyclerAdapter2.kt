@@ -53,6 +53,15 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
             pos = position
             holderMain = holder
 
+
+            if (pos == 0) {
+                mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guid)
+                holder.itemMainBinding.infoContainer.setPadding(32, 0, 0, 0);
+            } else if (pos == itemList.size - 1) {
+                holder.itemMainBinding.infoContainer.setPadding(0, 0, 32, 0);
+            }
+
+
             holder.itemMainBinding.tvName.text = config!!.remarks
             holder.itemMainBinding.tvName.text = itemList[position].getCountry()
             holder.itemMainBinding.tvCity.text = itemList[position].getCity()
@@ -68,7 +77,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
             }
 
             holder.itemMainBinding.infoContainer.setOnClickListener {
-
 
                 Log.d("TAGGGG", isRunning.toString())
                 if (isRunning) {

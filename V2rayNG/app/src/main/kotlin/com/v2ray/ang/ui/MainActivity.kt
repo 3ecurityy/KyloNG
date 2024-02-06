@@ -333,13 +333,14 @@ class MainActivity : BaseActivity(), SpeedListener,
                 binding.recyclerView.fadeVisibility(View.VISIBLE)
             }
 
-        binding.recyclerView.setHasFixedSize(true)
+        //binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         binding.recyclerView.adapter = adapter
         val callback = SimpleItemTouchHelperCallback(adapter)
         mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
+
     }
 
     private fun changeTheme(isRun: Boolean) {
