@@ -126,11 +126,11 @@ class MainActivity : BaseActivity(), SpeedListener,
             }
 
             AppStart.FIRST_TIME_VERSION -> {
-               // normalStart()
+                // normalStart()
             }
 
             AppStart.FIRST_TIME -> {
-               // firstTimeStart()
+                // firstTimeStart()
             }
 
             else -> {}
@@ -333,6 +333,12 @@ class MainActivity : BaseActivity(), SpeedListener,
             binding.tvTap.setTextColor(resources.getColor(R.color.primaryGray))
             binding.tvKylo.setTextColor(resources.getColor(R.color.primaryGray))
             // binding.tvTimer.visibility = View.VISIBLE
+            binding.parentGasStation.background = resources.getDrawable(R.drawable.reward_shape_connect)
+
+            binding.tvTimerReward.setTextColor(resources.getColor((R.color.primaryGray)))
+            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryYellow)
+
+
         } else {
             binding.tvLocation.setTextColor(resources.getColor(R.color.serverlocation))
             binding.imageViewSignal.isVisible = true
@@ -343,6 +349,9 @@ class MainActivity : BaseActivity(), SpeedListener,
             binding.tvTap.text = "Tap Start Button to Connecting"
             binding.tvTap.setTextColor(resources.getColor(R.color.colorTapConnect))
             binding.tvKylo.setTextColor(resources.getColor(R.color.white))
+            binding.parentGasStation.background = resources.getDrawable(R.drawable.reward_shape)
+            binding.tvTimerReward.setTextColor(resources.getColor((R.color.white)))
+            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryGray)
             // binding.tvTimer.visibility = View.GONE
             //  stopwatch.reset()
             // stopwatch.stop()

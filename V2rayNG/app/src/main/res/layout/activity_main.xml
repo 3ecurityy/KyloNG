@@ -40,6 +40,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_kylo" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/parentGasStation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="20dp"
