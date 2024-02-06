@@ -14,7 +14,7 @@
         android:id="@+id/tv_kylo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
         android:fontFamily="@font/sniglet_regular"
         android:text="KYLO VPN"
@@ -45,10 +45,10 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="20dp"
         android:background="@drawable/reward_shape"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:paddingRight="12dp"
         android:paddingLeft="12dp"
+        android:paddingTop="8dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_kylo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_kylo">
@@ -85,25 +85,66 @@
         android:id="@+id/tv_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/roboto_condensed"
         android:text="@string/server_location"
         android:textColor="@color/serverlocation"
-        app:layout_constraintEnd_toEndOf="@+id/tv_kylo"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/tv_kylo"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_kylo" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="wrap_content"
+        android:visibility="gone"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:nextFocusRight="@+id/fab"
-        app:layout_constraintStart_toStartOf="@+id/tv_kylo"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_location" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/parent_loading"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/loading_shape"
+        android:nextFocusRight="@+id/fab"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location">
+
+        <ProgressBar
+            android:id="@+id/ProgressBar"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="40dp"
+            android:indeterminateTint="@color/primaryYellow"
+            android:progress="50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textView3"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_condensed"
+            android:text="@string/get_servers_from_blockchain"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint"
+
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/guideline4"

@@ -12,7 +12,7 @@ public interface ApiInterface {
 
     // Register api method
     @SerializedName("")
-    @GET("/rs/j.json")
+    @GET("/api/servers.json")
     Single<Response<ConfigResponse>> GetConfig();
 
 }

@@ -10,12 +10,17 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.text.TextUtils
+import android.transition.Fade
+import android.transition.Transition
+import android.transition.TransitionManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -253,6 +258,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                                     Log.i("CONFIG", t.body()!!.subConfig[i].getConfig().toString())
                                 }
 
+                                binding.parentLoading.fadeVisibility(View.GONE)
                                 initRecyclerview()
                             }
                         }
@@ -266,6 +272,15 @@ class MainActivity : BaseActivity(), SpeedListener,
             })
         compositeDisposable?.add(disposable)
     }
+
+    fun View.fadeVisibility(visibility: Int, duration: Long = 400) {
+        val transition: Transition = Fade()
+        transition.duration = duration
+        transition.addTarget(this)
+        TransitionManager.beginDelayedTransition(this.parent as ViewGroup, transition)
+        this.visibility = visibility
+    }
+
 
     private fun checkAppStart(): AppStart? {
         val pInfo: PackageInfo
@@ -312,6 +327,12 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     fun initRecyclerview() {
+        Handler().postDelayed(
+            {
+                binding.recyclerView.fadeVisibility(View.VISIBLE)
+            }, 400
+        )
+
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
@@ -333,7 +354,8 @@ class MainActivity : BaseActivity(), SpeedListener,
             binding.tvTap.setTextColor(resources.getColor(R.color.primaryGray))
             binding.tvKylo.setTextColor(resources.getColor(R.color.primaryGray))
             // binding.tvTimer.visibility = View.VISIBLE
-            binding.parentGasStation.background = resources.getDrawable(R.drawable.reward_shape_connect)
+            binding.parentGasStation.background =
+                resources.getDrawable(R.drawable.reward_shape_connect)
 
             binding.tvTimerReward.setTextColor(resources.getColor((R.color.primaryGray)))
             window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryYellow)
