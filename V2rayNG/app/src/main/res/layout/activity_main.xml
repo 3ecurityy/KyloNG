@@ -12,13 +12,31 @@
 
     <TextView
         android:id="@+id/tv_kylo"
-        android:layout_width="100dp"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_marginStart="20dp"
         android:layout_marginTop="24dp"
+        android:fontFamily="@font/sniglet_regular"
         android:text="KYLO VPN"
+        android:textColor="#FAFAFA"
+        android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/free_shape"
+        android:text="Free"
+        android:layout_marginTop="-4dp"
+        android:gravity="center"
+        android:textSize="10sp"
+        android:layout_marginLeft="6dp"
+        android:fontFamily="@font/roboto_condensed_bold"
+        android:textColor="@color/white"
+        android:textAlignment="center"
+        app:layout_constraintStart_toEndOf="@+id/tv_kylo"
+        app:layout_constraintTop_toTopOf="@+id/tv_kylo" />
 
     <ir.samanjafari.easycountdowntimer.EasyCountDownTextview
         android:id="@+id/tv_timer_reward"
@@ -33,7 +51,7 @@
         app:digitBackground="@android:color/transparent"
 
         app:hours="0"
-        app:layout_constraintBottom_toTopOf="@+id/tv_location"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_kylo"
         app:setAnimation="true"
