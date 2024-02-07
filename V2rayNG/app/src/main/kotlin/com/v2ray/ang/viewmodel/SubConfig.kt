@@ -22,6 +22,15 @@ class SubConfig {
     @Expose
     private val img: String? = null
 
+    @SerializedName("sortOrder")
+    @Expose
+    private val id: String? = null
+
+
+    fun getId(): String? {
+        return id
+    }
+
     fun getImg(): String? {
         return img
     }

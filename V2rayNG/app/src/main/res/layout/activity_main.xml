@@ -97,10 +97,10 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="wrap_content"
-        android:visibility="gone"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:nextFocusRight="@+id/fab"
+        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_location" />
 
@@ -122,8 +122,8 @@
             style="?android:attr/progressBarStyleSmall"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginEnd="5dp"
             android:layout_marginStart="40dp"
+            android:layout_marginEnd="5dp"
             android:indeterminateTint="@color/primaryYellow"
             android:progress="50"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -145,13 +145,38 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint"
-
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/guideline4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline3">
+
+        <TextView
+            android:id="@+id/tv_timer2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_condensed"
+            android:textColor="@color/primaryGray"
+            android:textSize="50sp"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_connected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/roboto_condensed"
+            android:text="@string/connected"
+            android:textColor="@color/primaryGray"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_timer2"
+            app:layout_constraintStart_toStartOf="@+id/tv_timer2"
+            app:layout_constraintTop_toBottomOf="@+id/tv_timer2" />
 
 
         <ir.samanjafari.easycountdowntimer.EasyCountDownTextview
@@ -160,24 +185,7 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:textSize="40sp"
-            app:colonColor="#000"
-            app:days="1"
-            app:daysLabel="D"
-            app:digitBackground="@android:color/transparent"
-            app:hours="0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.509"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.98"
-            app:setAnimation="true"
-            app:showDays="false"
-            app:showHours="true"
-            app:start_automatically="false"
-            app:textColor="#9c9c9c"
-            app:textSize="12sp"
-            app:useFarsiNumeral="false" />
+            android:visibility="gone" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/parent_dl"
@@ -286,6 +294,7 @@
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:fontFamily="@font/roboto_condensed"
             android:gravity="center"
             android:text="Not Connected"
             android:textAlignment="center"

@@ -3,34 +3,23 @@ package com.v2ray.ang.ui
 import android.graphics.Color
 import android.text.TextUtils
 import android.util.Log
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.v2ray.ang.viewmodel.SubConfig
 import com.tencent.mmkv.MMKV
-import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ItemRecyclerMain2Binding
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.helper.ItemTouchHelperAdapter
 import com.v2ray.ang.helper.ItemTouchHelperViewHolder
-import com.v2ray.ang.service.V2RayServiceManager
-import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.MmkvManager
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.v2ray.ang.viewmodel.SubConfig
 
 class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<SubConfig>) :
     RecyclerView.Adapter<MainRecyclerAdapter2.BaseViewHolder>(),
     ItemTouchHelperAdapter {
-
-    companion object {
-        private const val VIEW_TYPE_ITEM = 1
-    }
 
     private var mActivity: MainActivity = activity
 
@@ -44,7 +33,7 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
     var isRunning = false
     lateinit var holderMain: MainViewHolder
     var pos: Int = 0
-    override fun getItemCount() = mActivity.mainViewModel.serversCache.size
+    override fun getItemCount() = itemList.size
 
     override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
         if (holder is MainViewHolder) {
@@ -54,19 +43,30 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
             holderMain = holder
 
 
-            if (pos == 0) {
-                mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guid)
+            Log.d("TAG", "absoluteAdapterPosition  ${holder.absoluteAdapterPosition.toString()}")
+            Log.d("TAG", "bindingAdapterPosition ${holder.bindingAdapterPosition.toString()}")
+            Log.d("TAG", "holder.position  ${holder.position.toString()}")
+            Log.d("TAG", "position  ${position.toString()}")
+            Log.d("TAG", "position layoutPosition ${holder.layoutPosition}")
+            Log.d("TAG", itemList[holder.bindingAdapterPosition].getId()!!.toInt().toString())
+
+            if (itemList[position].getId()!!.toInt() == 0) {
                 holder.itemMainBinding.infoContainer.setPadding(32, 0, 0, 0);
-            } else if (pos == itemList.size - 1) {
+            } else {
+                holder.itemMainBinding.infoContainer.setPadding(0, 0, 0, 0);
+            }
+            if (itemList[position].getId()!!.toInt() == itemList.size - 1) {
                 holder.itemMainBinding.infoContainer.setPadding(0, 0, 32, 0);
+            } else {
+                if (itemList[position].getId()!!.toInt() != 0) {
+                    holder.itemMainBinding.infoContainer.setPadding(0, 0, 0, 0);
+                }
             }
 
-
-            holder.itemMainBinding.tvName.text = config!!.remarks
+            holder.itemMainBinding.tvName.text = config.remarks
             holder.itemMainBinding.tvName.text = itemList[position].getCountry()
             holder.itemMainBinding.tvCity.text = itemList[position].getCity()
             holder.itemView.setBackgroundColor(Color.TRANSPARENT)
-            //holder.itemMainBinding.imgCountry
             Glide.with(mActivity).load(mActivity.itemList[position].getImg())
                 .into(holder.itemMainBinding.imgCountry);
 
@@ -77,8 +77,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
             }
 
             holder.itemMainBinding.infoContainer.setOnClickListener {
-
-                Log.d("TAGGGG", isRunning.toString())
                 if (isRunning) {
                     mActivity.toast("Please First Disconnect For Change Server")
                 } else {
@@ -130,9 +128,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
         )
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return VIEW_TYPE_ITEM
-    }
 
     open class BaseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun onItemSelected() {
@@ -160,26 +155,12 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
     override fun onItemMoveCompleted() {
     }
 
-    private fun measureV2rayDelay(): Long {
-        var time = -1L
-        GlobalScope.launch(Dispatchers.IO) {
-            val service = V2RayServiceManager.serviceControl?.get()?.getService() ?: return@launch
-            var errstr = ""
-            if (V2RayServiceManager.v2rayPoint.isRunning) {
-                try {
-                    time = V2RayServiceManager.v2rayPoint.measureDelay()
-                } catch (e: Exception) {
-                    Log.d(AppConfig.ANG_PACKAGE, "measureV2rayDelay: $e")
-                    errstr = e.message?.substringAfter("\":") ?: "empty message"
-                }
-            }
-            val result = if (time == -1L) {
-                service.getString(R.string.connection_test_error, errstr)
-            } else {
-                service.getString(R.string.connection_test_available, time)
-            }
-            MessageUtil.sendMsg2UI(service, AppConfig.MSG_MEASURE_DELAY_SUCCESS, result)
-        }
-        return time
+    override fun getItemViewType(position: Int): Int {
+        return super.getItemViewType(position)
     }
+
+    override fun getItemId(position: Int): Long {
+        return super.getItemId(position)
+    }
+
 }

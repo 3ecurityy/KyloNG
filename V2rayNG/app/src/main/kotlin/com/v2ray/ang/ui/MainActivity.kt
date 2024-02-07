@@ -10,7 +10,6 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.text.TextUtils
 import android.transition.Fade
 import android.transition.Transition
@@ -21,11 +20,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -51,6 +52,8 @@ import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.ConfigResponse
 import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.viewmodel.SubConfig
+import io.reactivex.ObservableSource
+import io.reactivex.annotations.NonNull
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.observers.DisposableSingleObserver
@@ -58,6 +61,9 @@ import io.reactivex.schedulers.Schedulers
 import ir.samanjafari.easycountdowntimer.CountDownInterface
 import ir.samanjafari.easycountdowntimer.EasyCountDownTextview
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.drakeet.support.toast.ToastCompat
 import org.json.JSONObject
@@ -67,12 +73,19 @@ import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import java.io.File
 import java.io.FileOutputStream
+import java.sql.Time
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
 class MainActivity : BaseActivity(), SpeedListener,
     NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityMainBinding
+    var seconds = 0;
+    var running: Boolean = false
+
+    val scope = MainScope() // could also use an other scope such as viewModelScope if available
+    var job: Job? = null
 
     val itemList = ArrayList<SubConfig>()
     private val adapter by lazy { MainRecyclerAdapter2(this, itemList) }
@@ -117,6 +130,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         setContentView(view)
 
         MmkvManager.removeAllServer()
+        mainViewModel.serversCache.clear()
+        mainViewModel.serverList.clear()
 
         val window = this.window
         if (mainViewModel.isRunning.value == true) {
@@ -149,6 +164,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
                 Utils.stopVService(this)
+                changeTheme(false)
             } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
                 val intent = VpnService.prepare(this)
                 if (intent == null) {
@@ -333,18 +349,22 @@ class MainActivity : BaseActivity(), SpeedListener,
                 binding.recyclerView.fadeVisibility(View.VISIBLE)
             }
 
-        //binding.recyclerView.setHasFixedSize(true)
-        binding.recyclerView.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         binding.recyclerView.adapter = adapter
         val callback = SimpleItemTouchHelperCallback(adapter)
         mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
 
+
+
+
     }
 
     private fun changeTheme(isRun: Boolean) {
         if (isRun) {
+            binding.tvTimer2.visibility = View.VISIBLE
+            //binding.tvTimer.visibility = View.VISIBLE
             binding.tvLocation.setTextColor(resources.getColor(R.color.primaryGray))
             binding.imageViewSignal.isVisible = false
             binding.imageView2.isVisible = false
@@ -363,6 +383,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
 
         } else {
+            //binding.tvTimer.visibility = View.GONE
             binding.tvLocation.setTextColor(resources.getColor(R.color.serverlocation))
             binding.imageViewSignal.isVisible = true
             binding.imageView2.isVisible = true
@@ -378,6 +399,12 @@ class MainActivity : BaseActivity(), SpeedListener,
             // binding.tvTimer.visibility = View.GONE
             //  stopwatch.reset()
             // stopwatch.stop()
+
+            binding.tvTimer2.visibility = View.GONE
+            running = false
+            seconds = 0;
+            job?.cancel()
+            job = null
         }
     }
 
@@ -437,12 +464,40 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
+    fun startConnectionTimer() {
+        val timeView = findViewById<View>(R.id.tv_timer2) as TextView
+
+
+        job = scope.launch {
+            while (true) {
+                val hours: Int = seconds / 3600
+                val minutes: Int = seconds % 3600 / 60
+                val secs: Int = seconds % 60
+                val time = String.format(
+                    Locale.getDefault(),
+                    "%02d:%02d:%02d", hours,
+                    minutes, secs
+                )
+                timeView.text = time
+                if (running) {
+                    seconds++
+                }
+                delay(1000)
+            }
+        }
+
+
+    }
+
+
     private fun startV2Ray() {
         if (mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER).isNullOrEmpty()) {
             return
         }
         V2RayServiceManager.startV2Ray(this)
         changeTheme(true)
+        running = true
+        startConnectionTimer()
         // adapter.click()
         // startChangeSpeedView(up, down)
         // stopwatch.start()
@@ -868,12 +923,12 @@ class MainActivity : BaseActivity(), SpeedListener,
     fun importCustomizeConfig(server: String?) {
         try {
             if (server == null || TextUtils.isEmpty(server)) {
-                toast(R.string.toast_none_data)
+                //toast(R.string.toast_none_data)
                 return
             }
             mainViewModel.appendCustomConfigServer(server)
             mainViewModel.reloadServerList()
-            toast(R.string.toast_success)
+            //toast(R.string.toast_success)
             //adapter.notifyItemInserted(mainViewModel.serverList.lastIndex)
         } catch (e: Exception) {
             ToastCompat.makeText(

@@ -19,13 +19,13 @@ val Context.v2RayApplication: AngApplication
 fun Context.toast(message: Int): Toast = ToastCompat
         .makeText(this, message, Toast.LENGTH_SHORT)
         .apply {
-            show()
+           // show()
         }
 
 fun Context.toast(message: CharSequence): Toast = ToastCompat
         .makeText(this, message, Toast.LENGTH_SHORT)
         .apply {
-            show()
+          //  show()
         }
 
 fun JSONObject.putOpt(pair: Pair<String, Any>) = putOpt(pair.first, pair.second)

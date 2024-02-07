@@ -249,7 +249,7 @@ object Utils {
 
     fun startVServiceFromToggle(context: Context): Boolean {
         if (mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER).isNullOrEmpty()) {
-            context.toast(R.string.app_tile_first_use)
+           // context.toast(R.string.app_tile_first_use)
             return false
         }
         V2RayServiceManager.startV2Ray(context)
@@ -260,7 +260,7 @@ object Utils {
      * stopVService
      */
     fun stopVService(context: Context) {
-        context.toast(R.string.toast_services_stop)
+       // context.toast(R.string.toast_services_stop)
         MessageUtil.sendMsg2Service(context, AppConfig.MSG_STATE_STOP, "")
     }
 

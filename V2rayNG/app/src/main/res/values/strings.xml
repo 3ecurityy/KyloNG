@@ -271,5 +271,6 @@
 
     <string name="server_location">Server Location</string>
     <string name="get_servers_from_blockchain">Get servers from blockchain</string>
+    <string name="connected">Connected</string>
 
 </resources>
