@@ -43,6 +43,10 @@ class MainRecyclerAdapter2(val activity: MainActivity, val itemList: ArrayList<S
             holderMain = holder
 
 
+            /*         val guidPos0 = mActivity.mainViewModel.serversCache[0].guid
+                     if (guidPos0 == guid)
+                         mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guidPos0)*/
+
             Log.d("TAG", "absoluteAdapterPosition  ${holder.absoluteAdapterPosition.toString()}")
             Log.d("TAG", "bindingAdapterPosition ${holder.bindingAdapterPosition.toString()}")
             Log.d("TAG", "holder.position  ${holder.position.toString()}")

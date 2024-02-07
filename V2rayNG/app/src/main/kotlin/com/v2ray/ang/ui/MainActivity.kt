@@ -350,11 +350,18 @@ class MainActivity : BaseActivity(), SpeedListener,
             }
 
         binding.recyclerView.setHasFixedSize(true)
-        binding.recyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        binding.recyclerView.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         binding.recyclerView.adapter = adapter
         val callback = SimpleItemTouchHelperCallback(adapter)
         mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
+
+
+        Completable.timer(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .subscribe {
+                binding.recyclerView.findViewHolderForAdapterPosition(0)!!.itemView.performClick()
+            }
 
 
 
@@ -466,8 +473,6 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     fun startConnectionTimer() {
         val timeView = findViewById<View>(R.id.tv_timer2) as TextView
-
-
         job = scope.launch {
             while (true) {
                 val hours: Int = seconds / 3600
@@ -485,8 +490,6 @@ class MainActivity : BaseActivity(), SpeedListener,
                 delay(1000)
             }
         }
-
-
     }
 
 
