@@ -56,6 +56,9 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
         if (holder is MainViewHolder) {
             val guid = mActivity.mainViewModel.serversCache[position].guid
             val config = mActivity.mainViewModel.serversCache[position].config
+            mActivity.mainViewModel.serversCache[position].config.remarks =
+                itemList[position].getCountry() + itemList[position].getCity()
+
             pos = position
             holderMain = holder
 
@@ -68,12 +71,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
             setPadding(position)
             initData(position)
 
-            /*    if(itemList[position].getIsActive()){
-                    holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_selected)
-                }else{
-                    holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_unselected)
-                }*/
-
             if (guid == mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER)) {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_selected)
             } else {
@@ -83,11 +80,8 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
             if (appStart) {
                 appStart = false
                 for (i in 0 until itemList.size) {
-                   // Log.d("TAG", "ID ${itemList[i].getId()}")
                     if (itemList[i].getId().equals(mActivity.selectedItemUUId)) {
-                      //  Log.d("TAG", "IN IF")
                         selectedPosition = i
-                      //  Log.d("TAG", "IN IF after")
                     }
                 }
             }
@@ -95,7 +89,7 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
 
             if (position == selectedPosition) {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_selected)
-                //selectedPosition = -1
+                mainStorage.encode("UUID2", itemList[selectedPosition].getCountry() +" | "+ itemList[selectedPosition].getCity())
             } else {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_unselected)
             }
@@ -103,7 +97,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
             holder.itemMainBinding.infoContainer.setOnClickListener {
                 lastSelectedPosition = selectedPosition;
                 selectedPosition = holder.getBindingAdapterPosition();
-
                 if (isRunning) {
                     mActivity.toast("Please First Disconnect For Change Server")
                 } else {
@@ -112,6 +105,7 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
                         mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guid)
                         // mainStorage?.encode("UUID", itemList[position].getId())
                         sEdit.putString("UUID", itemList[position].getId())
+                        mainStorage.encode("UUID2", itemList[position].getCountry() +" | "+ itemList[position].getCity())
                         sEdit.apply()
                         if (!TextUtils.isEmpty(selected)) {
                             notifyItemChanged(mActivity.mainViewModel.getPosition(selected!!))

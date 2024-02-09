@@ -1,7 +1,9 @@
 package com.v2ray.ang.util
 
+import android.content.Context
 import com.google.gson.Gson
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AngApplication
 import com.v2ray.ang.dto.ServerAffiliationInfo
 import com.v2ray.ang.dto.ServerConfig
 import com.v2ray.ang.dto.SubscriptionItem
@@ -29,6 +31,8 @@ object MmkvManager {
             Gson().fromJson(json, Array<String>::class.java).toMutableList()
         }
     }
+
+
 
     fun decodeServerConfig(guid: String): ServerConfig? {
         if (guid.isBlank()) {
@@ -158,7 +162,7 @@ object MmkvManager {
         }
     }
 
-    fun sortByTestResults( ) {
+    fun sortByTestResults() {
         data class ServerDelay(var guid: String, var testDelayMillis: Long)
 
         val serverDelays = mutableListOf<ServerDelay>()

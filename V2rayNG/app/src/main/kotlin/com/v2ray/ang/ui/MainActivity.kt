@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.navigation.NavigationView
 import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import com.v2ray.ang.BottomSheet
@@ -89,6 +90,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     val itemList = ArrayList<SubConfig>()
     private val adapter by lazy { MainRecyclerAdapter2(this, itemList) }
+
     private val mainStorage by lazy {
         MMKV.mmkvWithID(
             MmkvManager.ID_MAIN,
@@ -122,7 +124,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     var selectedItemUUId = "A"
     private var leftRewardTime = mainStorage.decodeInt("rewardTime")
 
-    private lateinit var shPref: SharedPreferences
+    lateinit var shPref: SharedPreferences
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -191,7 +193,6 @@ class MainActivity : BaseActivity(), SpeedListener,
             val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
             Log.d("TAG", "Time Start $timeStart")
             shPref.edit().putInt("LastStart", timeStart).apply()
-            //startConnectionTimer(seconds)
         }
 
         setupViewModel()
@@ -304,6 +305,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     private fun startBuildingAds() {
         Toast.makeText(this, "U Need to Watch Ads to get Reward :)", Toast.LENGTH_SHORT).show()
     }
+
 
     private fun getBaseData() {
         //  Log.i("TAG", "GET BASE DATA")

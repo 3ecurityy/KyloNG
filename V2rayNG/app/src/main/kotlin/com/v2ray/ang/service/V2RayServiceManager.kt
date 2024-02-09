@@ -5,21 +5,20 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.Resources
-import android.graphics.BitmapFactory
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import com.v2ray.ang.AppConfig.TAG_DIRECT
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.ServerConfig
 import com.v2ray.ang.extension.toSpeedString
-import com.v2ray.ang.extension.toast
 import com.v2ray.ang.ui.MainActivity
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.MmkvManager
@@ -69,6 +68,7 @@ object V2RayServiceManager {
             )
         }
     var currentConfig: ServerConfig? = null
+
 
     private var lastQueryTime = 0L
     private var mBuilder: NotificationCompat.Builder? = null
@@ -144,6 +144,9 @@ object V2RayServiceManager {
         val service = serviceControl?.get()?.getService() ?: return
         val guid = mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER) ?: return
         val config = MmkvManager.decodeServerConfig(guid) ?: return
+
+
+
         if (!v2rayPoint.isRunning) {
             val result = V2rayConfigUtil.getV2rayConfig(service, guid)
             if (!result.status)
@@ -323,27 +326,29 @@ object V2RayServiceManager {
 
 
         //Set Large Icon
-             /*   .setLargeIcon(
-                    BitmapFactory.decodeResource(
-                        Resources.getSystem(),
-                        R.drawable.ic_stat_name
-                    )
-                )*/
+        /*   .setLargeIcon(
+               BitmapFactory.decodeResource(
+                   Resources.getSystem(),
+                   R.drawable.ic_stat_name
+               )
+           )*/
+
+
 
 
         mBuilder = NotificationCompat.Builder(service, channelId)
             .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(currentConfig?.remarks)
+            .setContentTitle(mainStorage.decodeString("UUID2", ""))
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setOngoing(true)
             .setShowWhen(false)
             .setOnlyAlertOnce(true)
             .setContentIntent(contentPendingIntent)
-            .addAction(
-                R.drawable.ic_close_grey_800_24dp,
-                service.getString(R.string.notification_action_stop_v2ray),
-                stopV2RayPendingIntent
-            )
+        /*.addAction(
+            R.drawable.ic_close_grey_800_24dp,
+            service.getString(R.string.notification_action_stop_v2ray),
+            stopV2RayPendingIntent
+        )*/
         //.build()
 
         //mBuilder?.setDefaults(NotificationCompat.FLAG_ONLY_ALERT_ONCE)  //取消震动,铃声其他都不好使
