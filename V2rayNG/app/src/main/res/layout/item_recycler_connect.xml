@@ -1,0 +1,96 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/info_container"
+    android:layout_width="wrap_content"
+    android:background="@android:color/transparent"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_indicator"
+        android:layout_width="135dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="@drawable/item_selected_active"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent">
+
+
+
+        <ImageView
+            android:id="@+id/img_country"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginTop="4dp"
+            android:src="@mipmap/ic_launcher"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.118"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="2"
+            android:textSize="14sp"
+            android:minLines="1"
+            android:fontFamily="@font/roboto_condensed_bold"
+            android:text="UnitedState"
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+            android:textColor="@color/item_county"
+            app:layout_constraintEnd_toEndOf="@+id/img_country"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/img_country"
+            app:layout_constraintTop_toBottomOf="@+id/img_country" />
+
+        <TextView
+            android:id="@+id/tv_city"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="2"
+            android:minLines="1"
+            android:textSize="12sp"
+            android:fontFamily="@font/roboto_condensed"
+            android:visibility="visible"
+            android:text="New York"
+            android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+            android:textColor="@color/primaryYellow"
+            app:layout_constraintEnd_toEndOf="@+id/tv_name"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@+id/tv_name"
+            app:layout_constraintTop_toBottomOf="@+id/tv_name" />
+
+        <ImageView
+            android:id="@+id/imageViewConnect"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:visibility="invisible"
+            android:paddingRight="20dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/verified"
+            app:layout_constraintStart_toStartOf="@+id/img_country"
+            app:layout_constraintTop_toBottomOf="@+id/tv_name" />
+
+        <TextView
+            android:id="@+id/tv_connect"
+            android:visibility="invisible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connected"
+            android:textColor="@color/green"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewConnect"
+            app:layout_constraintStart_toEndOf="@+id/imageViewConnect"
+            app:layout_constraintTop_toTopOf="@+id/imageViewConnect" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>
+

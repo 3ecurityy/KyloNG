@@ -24,11 +24,28 @@ class SubConfig {
 
     @SerializedName("sortOrder")
     @Expose
+    private val sortOrder: String? = null
+
+    @SerializedName("id")
+    @Expose
     private val id: String? = null
 
+    private var isActive: Boolean = false
 
     fun getId(): String? {
         return id
+    }
+
+    fun getIsActive(): Boolean {
+        return isActive
+    }
+
+    fun setIsActive(value:Boolean){
+        this.isActive = value
+    }
+
+    fun getSortOrder(): String? {
+        return sortOrder
     }
 
     fun getImg(): String? {

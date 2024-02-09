@@ -2,6 +2,7 @@ package com.v2ray.ang.ui
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
@@ -26,7 +27,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
-import androidx.core.view.setPadding
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -52,8 +52,6 @@ import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.ConfigResponse
 import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.viewmodel.SubConfig
-import io.reactivex.ObservableSource
-import io.reactivex.annotations.NonNull
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.observers.DisposableSingleObserver
@@ -73,19 +71,19 @@ import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import java.io.File
 import java.io.FileOutputStream
-import java.sql.Time
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.properties.Delegates
 
 
 class MainActivity : BaseActivity(), SpeedListener,
     NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityMainBinding
-    var seconds = 0;
-    var running: Boolean = false
+    private var seconds by Delegates.notNull<Int>()
+    private var running: Boolean = false
 
-    val scope = MainScope() // could also use an other scope such as viewModelScope if available
-    var job: Job? = null
+    private val scope = MainScope()
+    private var job: Job? = null
 
     val itemList = ArrayList<SubConfig>()
     private val adapter by lazy { MainRecyclerAdapter2(this, itemList) }
@@ -119,15 +117,19 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     private val LAST_APP_VERSION = "last_app_version"
-
+    var selectedItemUUId = "A"
     private var leftRewardTime = mainStorage.decodeInt("rewardTime")
 
+    private lateinit var shPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        shPref = getSharedPreferences("MyPref", Context.MODE_PRIVATE);
+
 
         MmkvManager.removeAllServer()
         mainViewModel.serversCache.clear()
@@ -139,6 +141,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         } else {
             window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryGray)
         }
+
+        selectedItemUUId = shPref.getString("UUID", "A").toString()
 
 
         when (checkAppStart()) {
@@ -165,6 +169,7 @@ class MainActivity : BaseActivity(), SpeedListener,
             if (mainViewModel.isRunning.value == true) {
                 Utils.stopVService(this)
                 changeTheme(false)
+                shPref.edit().putInt("LastStart", 0).apply()
             } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
                 val intent = VpnService.prepare(this)
                 if (intent == null) {
@@ -175,13 +180,16 @@ class MainActivity : BaseActivity(), SpeedListener,
             } else {
                 startV2Ray()
             }
+            val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
+            Log.d("TAG", "Time Start $timeStart")
+            shPref.edit().putInt("LastStart", timeStart).apply()
+            //startConnectionTimer(seconds)
         }
-
-
 
         setupViewModel()
         copyAssets()
         migrateLegacy()
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             RxPermissions(this).request(Manifest.permission.POST_NOTIFICATIONS).subscribe {
@@ -189,6 +197,41 @@ class MainActivity : BaseActivity(), SpeedListener,
             }
         }
 
+    }
+
+    private fun startConnectionTimer() {
+
+        val lastStart = shPref.getInt("LastStart", 0)
+        Log.d("TAG", "lastStart $lastStart")
+        val timeIn = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
+        Log.d("TAG", "timeIn $timeIn")
+        if (lastStart == 0) {
+            //return
+        } else {
+            seconds = timeIn - lastStart
+            Log.d("TAG", "seconds $seconds")
+        }
+
+        Log.d("TAG", "SECOND in startConnectionTimer $seconds")
+        val timeView = findViewById<View>(R.id.tv_timer2) as TextView
+        var seconds = seconds
+        job = scope.launch {
+            while (true) {
+                val hours: Int = seconds / 3600
+                val minutes: Int = seconds % 3600 / 60
+                val secs: Int = seconds % 60
+                val time = String.format(
+                    Locale.getDefault(),
+                    "%02d:%02d:%02d", hours,
+                    minutes, secs
+                )
+                timeView.text = time
+                if (running) {
+                    seconds++
+                }
+                delay(1000)
+            }
+        }
     }
 
     private fun normalStart() {
@@ -254,6 +297,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     private fun getBaseData() {
+        //  Log.i("TAG", "GET BASE DATA")
         val disposable: Disposable = getApi.GetConfig()
             .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread()).subscribeOn(
                 Schedulers.io()
@@ -266,13 +310,13 @@ class MainActivity : BaseActivity(), SpeedListener,
                                 for (i in 0 until t.body()!!.subConfig.size) {
 
                                     val obj = JSONObject(t.body()!!.subConfig[i].getConfig()!!)
-                                    Log.d("CONFIG", obj.toString())
+                                    // Log.d("CONFIG", obj.toString())
 
                                     itemList.add(t.body()!!.subConfig[i])
                                     importCustomizeConfig(
                                         t.body()!!.subConfig[i].getConfig().toString()
                                     )
-                                    Log.i("CONFIG", t.body()!!.subConfig[i].getConfig().toString())
+                                    //   Log.i("CONFIG", t.body()!!.subConfig[i].getConfig().toString())
                                 }
 
                                 binding.parentLoading.fadeVisibility(View.GONE)
@@ -280,13 +324,14 @@ class MainActivity : BaseActivity(), SpeedListener,
                             }
                         }
                     }
-                    Log.i("Getconfig", t.body()?.subConfig.toString())
+                    //   Log.i("Getconfig", t.body()?.subConfig.toString())
                 }
 
                 override fun onError(e: Throwable) {
-                    Log.i("GetConfig Throwable: ", e.toString())
+                    //  Log.i("GetConfig Throwable: ", e.toString())
                 }
             })
+        //  Log.i("TAG", "GET BASE DATA END")
         compositeDisposable?.add(disposable)
     }
 
@@ -297,7 +342,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         TransitionManager.beginDelayedTransition(this.parent as ViewGroup, transition)
         this.visibility = visibility
     }
-
 
     private fun checkAppStart(): AppStart? {
         val pInfo: PackageInfo
@@ -360,10 +404,12 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         Completable.timer(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
             .subscribe {
-                binding.recyclerView.findViewHolderForAdapterPosition(0)!!.itemView.performClick()
+                Log.d("TAG UUID MA", selectedItemUUId.toString())
+                if (selectedItemUUId.isNullOrEmpty()) {
+                    Log.d("selectedItd IS NULL", selectedItemUUId.toString())
+                    //  binding.recyclerView.findViewHolderForAdapterPosition(0)!!.itemView.performClick()
+                }
             }
-
-
 
 
     }
@@ -412,6 +458,7 @@ class MainActivity : BaseActivity(), SpeedListener,
             seconds = 0;
             job?.cancel()
             job = null
+
         }
     }
 
@@ -419,7 +466,10 @@ class MainActivity : BaseActivity(), SpeedListener,
         mainViewModel.isRunning.observe(this) { isRunning ->
             adapter.isRunning = isRunning
             if (isRunning) {
+                running = true
                 binding.tvStatus.text = "Connected"
+                binding.tvTimer2.visibility = View.VISIBLE
+                startConnectionTimer()
                 changeTheme(isRunning)
             } else {
                 binding.tvStatus.text = "Not Connected"
@@ -471,27 +521,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
-    fun startConnectionTimer() {
-        val timeView = findViewById<View>(R.id.tv_timer2) as TextView
-        job = scope.launch {
-            while (true) {
-                val hours: Int = seconds / 3600
-                val minutes: Int = seconds % 3600 / 60
-                val secs: Int = seconds % 60
-                val time = String.format(
-                    Locale.getDefault(),
-                    "%02d:%02d:%02d", hours,
-                    minutes, secs
-                )
-                timeView.text = time
-                if (running) {
-                    seconds++
-                }
-                delay(1000)
-            }
-        }
-    }
-
 
     private fun startV2Ray() {
         if (mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER).isNullOrEmpty()) {
@@ -500,7 +529,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         V2RayServiceManager.startV2Ray(this)
         changeTheme(true)
         running = true
-        startConnectionTimer()
+
+        //startConnectionTimer(shPref.getInt("LastSecondTimer", 0))
         // adapter.click()
         // startChangeSpeedView(up, down)
         // stopwatch.start()
@@ -829,8 +859,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     /**
      * import config from sub
      */
-    fun importConfigViaSub()
-            : Boolean {
+    fun importConfigViaSub(): Boolean {
         try {
             toast(R.string.title_sub_update)
             MmkvManager.decodeSubscriptions().forEach {
@@ -1015,5 +1044,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         mainStorage?.encode("outTime", timeStamp)
         super.onStop()
     }
+
 
 }
