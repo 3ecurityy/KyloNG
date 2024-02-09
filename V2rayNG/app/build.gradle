@@ -62,6 +62,7 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 
+
     splits {
         abi {
             enable true
@@ -156,6 +157,8 @@ dependencies {
     implementation 'ir.samanjafari.easycountdowntimer:easycountdowntimer:2.5.0'
 
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
+
+  //  implementation("androidx.compose.material3:material3:1.2.0")
 
 
 }

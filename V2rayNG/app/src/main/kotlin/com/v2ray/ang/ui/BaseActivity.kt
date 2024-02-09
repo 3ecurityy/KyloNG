@@ -7,9 +7,11 @@ import android.util.Log
 import android.view.MenuItem
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+
 import androidx.core.view.WindowCompat
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
+
 
 abstract class BaseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

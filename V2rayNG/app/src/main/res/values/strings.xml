@@ -265,12 +265,16 @@
     </string-array>
 
 
-
-
-
-
-    <string name="server_location">Server Location</string>
-    <string name="get_servers_from_blockchain">Get servers from blockchain</string>
-    <string name="connected">Connected</string>
+    <string name="server_location" translatable="false">Server Location</string>
+    <string name="get_servers_from_blockchain" translatable="false">Get servers from blockchain</string>
+    <string name="connected" translatable="false">Connected</string>
+    <string name="tap_connection" translatable="false">Tap Start Button to Connecting</string>
+    <string name="btn_start" translatable="false">START</string>
+    <string name="not_connected" translatable="false">Not Connected</string>
+    <string name="time_remaining" translatable="false">Your remaining Time is 1H 23M</string>
+    <string name="get_reward" translatable="false">You can increase 1H to your time by
+        watching the video Ad. Kylo also recommend you to watch several video Ad in a row,
+        so that your time ends latter and you wont encounter any interruption during using kylo</string>
+    <string name="watch_ad" translatable="false">Watch Ad</string>
 
 </resources>

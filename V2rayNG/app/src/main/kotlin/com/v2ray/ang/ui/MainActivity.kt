@@ -26,6 +26,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -36,6 +37,7 @@ import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
+import com.v2ray.ang.BottomSheet
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ActivityMainBinding
 import com.v2ray.ang.dto.EConfigType
@@ -122,6 +124,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private lateinit var shPref: SharedPreferences
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -130,6 +133,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         shPref = getSharedPreferences("MyPref", Context.MODE_PRIVATE);
 
+        val modalBottomSheet = BottomSheet()
 
         MmkvManager.removeAllServer()
         mainViewModel.serversCache.clear()
@@ -164,6 +168,10 @@ class MainActivity : BaseActivity(), SpeedListener,
         compositeDisposable = CompositeDisposable()
         getApi = RetrofitBuilder.Create(Const.BASE_URL)
         getBaseData()
+
+        binding.parentGasStation.setOnClickListener {
+            modalBottomSheet.show(supportFragmentManager, "ModalBottomSheet.TAG")
+        }
 
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
@@ -251,6 +259,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         )
         Toast.makeText(this, getRealRewardTime.toString(), Toast.LENGTH_LONG).show()
     }
+
 
     private fun firstTimeStart() {
         startTimer(
@@ -434,6 +443,8 @@ class MainActivity : BaseActivity(), SpeedListener,
             binding.tvTimerReward.setTextColor(resources.getColor((R.color.primaryGray)))
             window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryYellow)
 
+            binding.fab.background = resources.getDrawable(R.drawable.connect_btn_bg)
+            binding.fab.text = "STOP"
 
         } else {
             //binding.tvTimer.visibility = View.GONE
@@ -452,6 +463,8 @@ class MainActivity : BaseActivity(), SpeedListener,
             // binding.tvTimer.visibility = View.GONE
             //  stopwatch.reset()
             // stopwatch.stop()
+            binding.fab.text = "START"
+            binding.fab.background = resources.getDrawable(R.drawable.disconnect_btn_bg)
 
             binding.tvTimer2.visibility = View.GONE
             running = false
