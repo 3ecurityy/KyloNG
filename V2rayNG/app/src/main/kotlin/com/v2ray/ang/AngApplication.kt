@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.work.Configuration
+import com.google.android.gms.ads.MobileAds
 import com.tencent.mmkv.MMKV
 
 
@@ -15,6 +16,7 @@ class AngApplication() : MultiDexApplication(),
 
 
     companion object {
+        const val AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
         const val PREF_LAST_VERSION = "pref_last_version"
         lateinit var application: AngApplication
     }
@@ -45,5 +47,18 @@ class AngApplication() : MultiDexApplication(),
         return Configuration.Builder()
             .setDefaultProcessName("${BuildConfig.APPLICATION_ID}:bg")
             .build()
+    }
+
+
+    private fun initializeMobileAdsSdk() {
+        if (isMobileAdsInitializeCalled.getAndSet(true)) {
+            return
+        }
+
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this) { initializationStatus ->
+            // Load an ad.
+            loadAd()
+        }
     }
 }

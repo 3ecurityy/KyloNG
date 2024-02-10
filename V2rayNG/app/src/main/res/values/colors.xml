@@ -29,4 +29,5 @@
 
     <color name="white">#FFFFFF</color>
     <color name="secondaryConnect">#eac22c</color>
+    <color name="redColor">#ce003f</color>
 </resources>

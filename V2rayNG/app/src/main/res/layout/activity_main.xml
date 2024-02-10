@@ -71,7 +71,7 @@
             android:layout_marginStart="3dp"
             android:fontFamily="@font/roboto_condensed_bold"
             android:gravity="center"
-            android:text="1h 23m"
+            android:text="0h 0m"
             android:textColor="@color/white"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -277,4 +277,8 @@
         so that your time ends latter and you wont encounter any interruption during using kylo</string>
     <string name="watch_ad" translatable="false">Watch Ad</string>
 
+    <string name="endText" translatable="false">to your time by
+        watching the video Ad. Kylo also recommend you to watch several video Ad in a row,
+        so that your time ends latter and you wont encounter any interruption during using kylo</string>
+<string name="ss" translatable="false"> &lt;font color="#FF0000">This  is colored in red &lt;/font> This is not</string>
 </resources>

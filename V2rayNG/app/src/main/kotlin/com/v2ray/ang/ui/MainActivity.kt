@@ -93,14 +93,12 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private val mainStorage by lazy {
         MMKV.mmkvWithID(
-            MmkvManager.ID_MAIN,
-            MMKV.MULTI_PROCESS_MODE
+            MmkvManager.ID_MAIN, MMKV.MULTI_PROCESS_MODE
         )
     }
     private val settingsStorage by lazy {
         MMKV.mmkvWithID(
-            MmkvManager.ID_SETTING,
-            MMKV.MULTI_PROCESS_MODE
+            MmkvManager.ID_SETTING, MMKV.MULTI_PROCESS_MODE
         )
     }
     private val requestVpnPermission =
@@ -123,10 +121,11 @@ class MainActivity : BaseActivity(), SpeedListener,
     private val LAST_APP_VERSION = "last_app_version"
     var selectedItemUUId = "A"
     private var leftRewardTime = mainStorage.decodeInt("rewardTime")
+    private var baseRewardTime = 0
 
     lateinit var shPref: SharedPreferences
-
-
+    val bundle = Bundle()
+    val modalBottomSheet = BottomSheet()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -135,7 +134,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         shPref = getSharedPreferences("MyPref", Context.MODE_PRIVATE);
 
-        val modalBottomSheet = BottomSheet()
+
 
         MmkvManager.removeAllServer()
         mainViewModel.serversCache.clear()
@@ -143,56 +142,49 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         val window = this.window
         if (mainViewModel.isRunning.value == true) {
-            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryYellow)
+            window.statusBarColor = resources.getColor(R.color.primaryYellow)
         } else {
-            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryGray)
+            window.statusBarColor = resources.getColor(R.color.primaryGray)
         }
 
         selectedItemUUId = shPref.getString("UUID", "A").toString()
-
-
-        when (checkAppStart()) {
-            AppStart.NORMAL -> {
-                //normalStart()
-            }
-
-            AppStart.FIRST_TIME_VERSION -> {
-                // normalStart()
-            }
-
-            AppStart.FIRST_TIME -> {
-                // firstTimeStart()
-            }
-
-            else -> {}
-        }
 
         compositeDisposable = CompositeDisposable()
         getApi = RetrofitBuilder.Create(Const.BASE_URL)
         getBaseData()
 
+
         binding.parentGasStation.setOnClickListener {
             modalBottomSheet.show(supportFragmentManager, "ModalBottomSheet.TAG")
         }
 
+        if (leftRewardTime < 0) {
+            Utils.stopVService(this)
+        }
+
         binding.fab.setOnClickListener {
-            if (mainViewModel.isRunning.value == true) {
-                Utils.stopVService(this)
-                changeTheme(false)
-                shPref.edit().putInt("LastStart", 0).apply()
-            } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
-                val intent = VpnService.prepare(this)
-                if (intent == null) {
-                    startV2Ray()
+            if (leftRewardTime > 0) {
+                if (mainViewModel.isRunning.value == true) {
+                    Utils.stopVService(this)
+                    changeTheme(false)
+                    shPref.edit().putInt("LastStart", 0).apply()
+                } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
+                    val intent = VpnService.prepare(this)
+                    if (intent == null) {
+                        startV2Ray()
+                    } else {
+                        requestVpnPermission.launch(intent)
+                    }
                 } else {
-                    requestVpnPermission.launch(intent)
+                    startV2Ray()
                 }
+                val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
+                Log.d("TAG", "Time Start $timeStart")
+                shPref.edit().putInt("LastStart", timeStart).apply()
             } else {
-                startV2Ray()
+                modalBottomSheet.show(supportFragmentManager, "ModalBottomSheet.TAG")
             }
-            val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
-            Log.d("TAG", "Time Start $timeStart")
-            shPref.edit().putInt("LastStart", timeStart).apply()
+
         }
 
         setupViewModel()
@@ -206,10 +198,10 @@ class MainActivity : BaseActivity(), SpeedListener,
             }
         }
 
+
     }
 
     private fun startConnectionTimer() {
-
         val lastStart = shPref.getInt("LastStart", 0)
         Log.d("TAG", "lastStart $lastStart")
         val timeIn = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
@@ -230,9 +222,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                 val minutes: Int = seconds % 3600 / 60
                 val secs: Int = seconds % 60
                 val time = String.format(
-                    Locale.getDefault(),
-                    "%02d:%02d:%02d", hours,
-                    minutes, secs
+                    Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs
                 )
                 timeView.text = time
                 if (running) {
@@ -246,11 +236,16 @@ class MainActivity : BaseActivity(), SpeedListener,
     private fun normalStart() {
         val timeIn = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
         Log.d("TAG : OC IN", timeIn.toString())
-        val timeOutPr = mainStorage?.decodeInt("outTime")
+        // val timeOutPr = mainStorage?.decodeString("outTime").toInt()
+        val timeOutPr: Long = shPref.getLong("outTime", 0)
         Log.d("TAG : OC OUT", timeOutPr.toString())
 
         val diffBetweenTwoTime = timeIn - (timeOutPr ?: 0)
         val getRealRewardTime = leftRewardTime - diffBetweenTwoTime
+
+        bundle.putString("key", getRealRewardTime.toString())
+
+
         Log.d("TAG : getRealRewardTime", leftRewardTime.toString())
 
         startTimer(
@@ -261,13 +256,17 @@ class MainActivity : BaseActivity(), SpeedListener,
         Toast.makeText(this, getRealRewardTime.toString(), Toast.LENGTH_LONG).show()
     }
 
-
     private fun firstTimeStart() {
+        leftRewardTime = baseRewardTime
+        Log.d("TAG", "baseRewardTime $baseRewardTime")
+        Log.d("TAG", "leftRewardTime $leftRewardTime")
         startTimer(
-            getH(600).toInt(),
-            getMin(600).toInt(),
-            getSec(600).toInt()
+            getH(leftRewardTime.toLong()).toInt(),
+            getMin(leftRewardTime.toLong()).toInt(),
+            getSec(leftRewardTime.toLong()).toInt()
+
         )
+        bundle.putString("key", leftRewardTime.toString())
     }
 
     private fun startTimer(h: Int, m: Int, s: Int) {
@@ -281,6 +280,10 @@ class MainActivity : BaseActivity(), SpeedListener,
                 leftRewardTime -= lol.toInt()
                 mainStorage.encode("rewardTime", leftRewardTime)
                 Log.d("TAG : TTF", mainStorage.decodeInt("rewardTime").toString())
+
+                val time =
+                    getH(leftRewardTime.toLong()).toString() + "H" + " " + getMin(leftRewardTime.toLong()) + "M"
+                binding.tvTimerReward.text = time
             }
 
             override fun onFinish() {
@@ -306,7 +309,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         Toast.makeText(this, "U Need to Watch Ads to get Reward :)", Toast.LENGTH_SHORT).show()
     }
 
-
     private fun getBaseData() {
         //  Log.i("TAG", "GET BASE DATA")
         val disposable: Disposable = getApi.GetConfig()
@@ -319,15 +321,11 @@ class MainActivity : BaseActivity(), SpeedListener,
                         if (t.body()!!.subConfig != null) {
                             if (t.body()!!.subConfig.size > 0) {
                                 for (i in 0 until t.body()!!.subConfig.size) {
-
                                     val obj = JSONObject(t.body()!!.subConfig[i].getConfig()!!)
-                                    // Log.d("CONFIG", obj.toString())
-
                                     itemList.add(t.body()!!.subConfig[i])
                                     importCustomizeConfig(
                                         t.body()!!.subConfig[i].getConfig().toString()
                                     )
-                                    //   Log.i("CONFIG", t.body()!!.subConfig[i].getConfig().toString())
                                 }
 
                                 binding.parentLoading.fadeVisibility(View.GONE)
@@ -335,14 +333,33 @@ class MainActivity : BaseActivity(), SpeedListener,
                             }
                         }
                     }
-                    //   Log.i("Getconfig", t.body()?.subConfig.toString())
+                    baseRewardTime = t.body()!!.rewardTime!!.toLong().toInt()
+                    Log.d("TAG", "baseRewardTime $baseRewardTime")
+
+                    when (checkAppStart()) {
+                        AppStart.NORMAL -> {
+                            normalStart()
+                        }
+
+                        AppStart.FIRST_TIME_VERSION -> {
+                            normalStart()
+                        }
+
+                        AppStart.FIRST_TIME -> {
+                            firstTimeStart()
+                        }
+
+                        else -> {}
+                    }
+                    bundle.putInt("baseReward", baseRewardTime)
+                    modalBottomSheet.arguments = bundle
+
+
                 }
 
                 override fun onError(e: Throwable) {
-                    //  Log.i("GetConfig Throwable: ", e.toString())
                 }
             })
-        //  Log.i("TAG", "GET BASE DATA END")
         compositeDisposable?.add(disposable)
     }
 
@@ -399,10 +416,9 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     fun initRecyclerview() {
-        Completable.timer(400, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-            .subscribe {
-                binding.recyclerView.fadeVisibility(View.VISIBLE)
-            }
+        Completable.timer(400, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread()).subscribe {
+            binding.recyclerView.fadeVisibility(View.VISIBLE)
+        }
 
         binding.recyclerView.setHasFixedSize(true)
         binding.recyclerView.layoutManager =
@@ -413,14 +429,13 @@ class MainActivity : BaseActivity(), SpeedListener,
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
 
 
-        Completable.timer(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-            .subscribe {
-                Log.d("TAG UUID MA", selectedItemUUId.toString())
-                if (selectedItemUUId.isNullOrEmpty()) {
-                    Log.d("selectedItd IS NULL", selectedItemUUId.toString())
-                    //  binding.recyclerView.findViewHolderForAdapterPosition(0)!!.itemView.performClick()
-                }
+        Completable.timer(500, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread()).subscribe {
+            Log.d("TAG UUID MA", selectedItemUUId.toString())
+            if (selectedItemUUId.isNullOrEmpty()) {
+                Log.d("selectedItd IS NULL", selectedItemUUId.toString())
+                //  binding.recyclerView.findViewHolderForAdapterPosition(0)!!.itemView.performClick()
             }
+        }
 
 
     }
@@ -443,7 +458,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                 resources.getDrawable(R.drawable.reward_shape_connect)
 
             binding.tvTimerReward.setTextColor(resources.getColor((R.color.primaryGray)))
-            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryYellow)
+            window.statusBarColor = resources.getColor(R.color.primaryYellow)
 
             binding.fab.background = resources.getDrawable(R.drawable.connect_btn_bg)
             binding.fab.text = "STOP"
@@ -461,7 +476,7 @@ class MainActivity : BaseActivity(), SpeedListener,
             binding.tvKylo.setTextColor(resources.getColor(R.color.white))
             binding.parentGasStation.background = resources.getDrawable(R.drawable.reward_shape)
             binding.tvTimerReward.setTextColor(resources.getColor((R.color.white)))
-            window.statusBarColor = resources.getColor(com.v2ray.ang.R.color.primaryGray)
+            window.statusBarColor = resources.getColor(R.color.primaryGray)
             // binding.tvTimer.visibility = View.GONE
             //  stopwatch.reset()
             // stopwatch.stop()
@@ -499,10 +514,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val geo = arrayOf("geosite.dat", "geoip.dat")
-                assets.list("")
-                    ?.filter { geo.contains(it) }
-                    ?.filter { !File(extFolder, it).exists() }
-                    ?.forEach {
+                assets.list("")?.filter { geo.contains(it) }
+                    ?.filter { !File(extFolder, it).exists() }?.forEach {
                         val target = File(extFolder, it)
                         assets.open(it).use { input ->
                             FileOutputStream(target).use { output ->
@@ -510,8 +523,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                             }
                         }
                         Log.i(
-                            ANG_PACKAGE,
-                            "Copied from apk assets folder to ${target.absolutePath}"
+                            ANG_PACKAGE, "Copied from apk assets folder to ${target.absolutePath}"
                         )
                     }
             } catch (e: Exception) {
@@ -555,8 +567,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         if (mainViewModel.isRunning.value == true) {
             Utils.stopVService(this)
         }
-        Observable.timer(500, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread())
+        Observable.timer(500, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 startV2Ray()
             }
@@ -564,6 +575,9 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     public override fun onResume() {
         super.onResume()
+        if (leftRewardTime < 0) {
+            Utils.stopVService(this)
+        }
         mainViewModel.reloadServerList()
     }
 
@@ -649,8 +663,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         R.id.export_all -> {
             if (AngConfigManager.shareNonCustomConfigsToClipboard(
-                    this,
-                    mainViewModel.serverList
+                    this, mainViewModel.serverList
                 ) == 0
             ) {
                 toast(R.string.toast_success)
@@ -680,8 +693,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     MmkvManager.removeAllServer()
                     mainViewModel.reloadServerList()
-                }
-                .show()
+                }.show()
             true
         }
 
@@ -718,8 +730,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private fun importManually(createConfigType: Int) {
         startActivity(
-            Intent()
-                .putExtra("createConfigType", createConfigType)
+            Intent().putExtra("createConfigType", createConfigType)
                 .putExtra("subscriptionId", mainViewModel.subscriptionId)
                 .setClass(this, ServerActivity::class.java)
         )
@@ -731,22 +742,20 @@ class MainActivity : BaseActivity(), SpeedListener,
 //                    .addCategory(Intent.CATEGORY_DEFAULT)
 //                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP), requestCode)
 //        } catch (e: Exception) {
-        RxPermissions(this)
-            .request(Manifest.permission.CAMERA)
-            .subscribe {
-                if (it)
-                    if (forConfig)
-                        scanQRCodeForConfig.launch(Intent(this, ScannerActivity::class.java))
-                    else
-                        scanQRCodeForUrlToCustomConfig.launch(
-                            Intent(
-                                this,
-                                ScannerActivity::class.java
-                            )
-                        )
-                else
-                    toast(R.string.toast_permission_denied)
-            }
+        RxPermissions(this).request(Manifest.permission.CAMERA).subscribe {
+            if (it) if (forConfig) scanQRCodeForConfig.launch(
+                Intent(
+                    this,
+                    ScannerActivity::class.java
+                )
+            )
+            else scanQRCodeForUrlToCustomConfig.launch(
+                Intent(
+                    this, ScannerActivity::class.java
+                )
+            )
+            else toast(R.string.toast_permission_denied)
+        }
 //        }
         return true
     }
@@ -807,8 +816,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
-    fun importConfigCustomClipboard()
-            : Boolean {
+    fun importConfigCustomClipboard(): Boolean {
         try {
             val configText = Utils.getClipboard(this)
             if (TextUtils.isEmpty(configText)) {
@@ -878,9 +886,9 @@ class MainActivity : BaseActivity(), SpeedListener,
         try {
             toast(R.string.title_sub_update)
             MmkvManager.decodeSubscriptions().forEach {
-                if (TextUtils.isEmpty(it.first)
-                    || TextUtils.isEmpty(it.second.remarks)
-                    || TextUtils.isEmpty(it.second.url)
+                if (TextUtils.isEmpty(it.first) || TextUtils.isEmpty(it.second.remarks) || TextUtils.isEmpty(
+                        it.second.url
+                    )
                 ) {
                     return@forEach
                 }
@@ -922,8 +930,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         try {
             chooseFileForCustomConfig.launch(
                 Intent.createChooser(
-                    intent,
-                    getString(R.string.title_file_chooser)
+                    intent, getString(R.string.title_file_chooser)
                 )
             )
         } catch (ex: ActivityNotFoundException) {
@@ -948,20 +955,17 @@ class MainActivity : BaseActivity(), SpeedListener,
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
         }
-        RxPermissions(this)
-            .request(permission)
-            .subscribe {
-                if (it) {
-                    try {
-                        contentResolver.openInputStream(uri).use { input ->
-                            importCustomizeConfig(input?.bufferedReader()?.readText())
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+        RxPermissions(this).request(permission).subscribe {
+            if (it) {
+                try {
+                    contentResolver.openInputStream(uri).use { input ->
+                        importCustomizeConfig(input?.bufferedReader()?.readText())
                     }
-                } else
-                    toast(R.string.toast_permission_denied)
-            }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            } else toast(R.string.toast_permission_denied)
+        }
     }
 
     /**
@@ -1055,8 +1059,11 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     override fun onStop() {
-        val timeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
-        mainStorage?.encode("outTime", timeStamp)
+        val timeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
+        //mainStorage?.encode("outTime", timeStamp.toString())
+        shPref.edit().putLong("outTime", timeStamp).apply()
+        val lastStart = shPref.getLong("outTime", 0)
+        Log.d("TAG  OUT", lastStart.toString())
         super.onStop()
     }
 

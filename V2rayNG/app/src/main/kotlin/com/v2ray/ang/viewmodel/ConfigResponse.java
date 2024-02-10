@@ -16,11 +16,19 @@ public class ConfigResponse {
     @Expose
     private String version;
 
+    @SerializedName("rewardTime")
+    @Expose
+    private Long rewardTime;
+
     public ArrayList<SubConfig> getSubConfig() {
         return SubConfig;
     }
 
     public String getVersion() {
         return version;
+    }
+
+    public Long getRewardTime() {
+        return rewardTime;
     }
 }
