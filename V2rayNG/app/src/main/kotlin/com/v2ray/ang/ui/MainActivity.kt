@@ -2,8 +2,10 @@ package com.v2ray.ang.ui
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.NameNotFoundException
@@ -25,17 +27,28 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.NonNull
 import androidx.appcompat.app.AlertDialog
-
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.navigation.NavigationView
 import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
-import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import com.v2ray.ang.BottomSheet
@@ -80,7 +93,7 @@ import kotlin.properties.Delegates
 
 
 class MainActivity : BaseActivity(), SpeedListener,
-    NavigationView.OnNavigationItemSelectedListener {
+    NavigationView.OnNavigationItemSelectedListener, DefaultLifecycleObserver {
     private lateinit var binding: ActivityMainBinding
     private var seconds by Delegates.notNull<Int>()
     private var running: Boolean = false
@@ -113,10 +126,17 @@ class MainActivity : BaseActivity(), SpeedListener,
     private var compositeDisposable: CompositeDisposable? = null
     private lateinit var getApi: ApiInterface
 
+    private var mInterstitialAd: InterstitialAd? = null
 
     enum class AppStart {
         FIRST_TIME, FIRST_TIME_VERSION, NORMAL
+
     }
+
+    companion object {
+        var isStartClik = false
+    }
+
 
     private val LAST_APP_VERSION = "last_app_version"
     var selectedItemUUId = "A"
@@ -126,26 +146,23 @@ class MainActivity : BaseActivity(), SpeedListener,
     lateinit var shPref: SharedPreferences
     val bundle = Bundle()
     val modalBottomSheet = BottomSheet()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super<BaseActivity>.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        changeStatusBarColor()
+        registerMsgReceiver()
+        MobileAds.initialize(this)
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         shPref = getSharedPreferences("MyPref", Context.MODE_PRIVATE);
-
-
-
         MmkvManager.removeAllServer()
         mainViewModel.serversCache.clear()
         mainViewModel.serverList.clear()
-
-        val window = this.window
-        if (mainViewModel.isRunning.value == true) {
-            window.statusBarColor = resources.getColor(R.color.primaryYellow)
-        } else {
-            window.statusBarColor = resources.getColor(R.color.primaryGray)
-        }
 
         selectedItemUUId = shPref.getString("UUID", "A").toString()
 
@@ -165,9 +182,22 @@ class MainActivity : BaseActivity(), SpeedListener,
         binding.fab.setOnClickListener {
             if (leftRewardTime > 0) {
                 if (mainViewModel.isRunning.value == true) {
-                    Utils.stopVService(this)
-                    changeTheme(false)
-                    shPref.edit().putInt("LastStart", 0).apply()
+                    //Stop Timer
+                    binding.tvTimer2.visibility = View.INVISIBLE
+
+                    //Change Icon ImageView
+                    binding.imageView2.visibility = View.VISIBLE
+                    binding.imageView2.setImageDrawable(
+                        ContextCompat.getDrawable(
+                            this,
+                            R.drawable.connectiong
+                        )
+                    )
+
+                    binding.tvConnected.text = resources.getString(R.string.disconnect)
+                    binding.fab.isEnabled = false
+
+                    showOnDisConnectedInterstitialAd()
                 } else if (settingsStorage?.decodeString(AppConfig.PREF_MODE) ?: "VPN" == "VPN") {
                     val intent = VpnService.prepare(this)
                     if (intent == null) {
@@ -178,6 +208,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                 } else {
                     startV2Ray()
                 }
+
                 val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
                 Log.d("TAG", "Time Start $timeStart")
                 shPref.edit().putInt("LastStart", timeStart).apply()
@@ -190,15 +221,84 @@ class MainActivity : BaseActivity(), SpeedListener,
         setupViewModel()
         copyAssets()
         migrateLegacy()
+        getPermissions()
 
 
+
+        mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdClicked() {
+                Log.d("TAG", "onAdClicked")
+                isStartClik = false
+            }
+
+            override fun onAdDismissedFullScreenContent() {
+                Log.d("TAG", "onAdDismissedFullScreenContent")
+                isStartClik = false
+                mInterstitialAd = null
+            }
+
+            override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+                Log.d("TAG", "onAdFailedToShowFullScreenContent")
+                isStartClik = false
+                mInterstitialAd = null
+            }
+
+            override fun onAdImpression() {
+                Log.d("TAG", "onAdImpression")
+                isStartClik = false
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                Log.d("TAG", "onAdShowedFullScreenContent")
+            }
+        }
+
+        // changeTheme(true)
+
+    }
+
+    private fun getPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             RxPermissions(this).request(Manifest.permission.POST_NOTIFICATIONS).subscribe {
                 if (!it) toast(R.string.toast_permission_denied)
             }
         }
+    }
+
+    private fun changeStatusBarColor() {
+        val window = this.window
+        if (mainViewModel.isRunning.value == true) {
+            window.statusBarColor = resources.getColor(R.color.primaryYellow)
+        } else {
+            window.statusBarColor = resources.getColor(R.color.primaryGray)
+        }
+    }
+
+    private fun registerMsgReceiver() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            application.registerReceiver(
+                mMsgReceiver,
+                IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY),
+                Context.RECEIVER_EXPORTED
+            )
+        } else {
+            application.registerReceiver(
+                mMsgReceiver,
+                IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY)
+            )
+        }
+    }
 
 
+    private val mMsgReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            when (intent?.getIntExtra("key", 0)) {
+                AppConfig.MSG_STATE_START_SUCCESS -> {
+                    showOnConnectedInterstitialAd()
+                    Log.d("TAG", "IS RUN")
+                }
+            }
+        }
     }
 
     private fun startConnectionTimer() {
@@ -240,18 +340,17 @@ class MainActivity : BaseActivity(), SpeedListener,
         val timeOutPr: Long = shPref.getLong("outTime", 0)
         Log.d("TAG : OC OUT", timeOutPr.toString())
 
-        val diffBetweenTwoTime = timeIn - (timeOutPr ?: 0)
+        val diffBetweenTwoTime = timeIn - timeOutPr
         val getRealRewardTime = leftRewardTime - diffBetweenTwoTime
 
         bundle.putString("key", getRealRewardTime.toString())
 
-
         Log.d("TAG : getRealRewardTime", leftRewardTime.toString())
 
         startTimer(
-            getH(getRealRewardTime.toLong()).toInt(),
-            getMin(getRealRewardTime.toLong()).toInt(),
-            getSec(getRealRewardTime.toLong()).toInt()
+            getH(getRealRewardTime).toInt(),
+            getMin(getRealRewardTime).toInt(),
+            getSec(getRealRewardTime).toInt()
         )
         Toast.makeText(this, getRealRewardTime.toString(), Toast.LENGTH_LONG).show()
     }
@@ -287,7 +386,8 @@ class MainActivity : BaseActivity(), SpeedListener,
             }
 
             override fun onFinish() {
-                startBuildingAds()
+                Utils.stopVService(this@MainActivity)
+                //V2RayServiceManager.stopV2rayPoint()
             }
         })
         countDownTextview.startTimer()
@@ -353,7 +453,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                     }
                     bundle.putInt("baseReward", baseRewardTime)
                     modalBottomSheet.arguments = bundle
-
+                    binding.fab.isEnabled = true
 
                 }
 
@@ -441,6 +541,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     private fun changeTheme(isRun: Boolean) {
+        Log.d("TAG", "IS RUN IS $isRun")
         if (isRun) {
             binding.tvTimer2.visibility = View.VISIBLE
             //binding.tvTimer.visibility = View.VISIBLE
@@ -462,6 +563,10 @@ class MainActivity : BaseActivity(), SpeedListener,
 
             binding.fab.background = resources.getDrawable(R.drawable.connect_btn_bg)
             binding.fab.text = "STOP"
+            binding.tvConnected.text = "Connected"
+            binding.fab.isEnabled = true
+            binding.tvWarning.visibility = View.GONE
+            binding.animationView.visibility = View.GONE
 
         } else {
             //binding.tvTimer.visibility = View.GONE
@@ -482,6 +587,7 @@ class MainActivity : BaseActivity(), SpeedListener,
             // stopwatch.stop()
             binding.fab.text = "START"
             binding.fab.background = resources.getDrawable(R.drawable.disconnect_btn_bg)
+            binding.imageView2.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ns));
 
             binding.tvTimer2.visibility = View.GONE
             running = false
@@ -497,10 +603,11 @@ class MainActivity : BaseActivity(), SpeedListener,
             adapter.isRunning = isRunning
             if (isRunning) {
                 running = true
-                binding.tvStatus.text = "Connected"
-                binding.tvTimer2.visibility = View.VISIBLE
-                startConnectionTimer()
-                changeTheme(isRunning)
+
+                if (!isStartClik) {
+                    changeTheme(isRunning)
+                }
+
             } else {
                 binding.tvStatus.text = "Not Connected"
                 changeTheme(isRunning)
@@ -548,24 +655,96 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
-
     private fun startV2Ray() {
         if (mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER).isNullOrEmpty()) {
             return
         }
+        isStartClik = true
         V2RayServiceManager.startV2Ray(this)
-        changeTheme(true)
         running = true
+        binding.fab.isEnabled = false
+        binding.tvWarning.visibility = View.VISIBLE
+        binding.animationView.visibility = View.VISIBLE
+        binding.animationView.playAnimation()
 
-        //startConnectionTimer(shPref.getInt("LastSecondTimer", 0))
-        // adapter.click()
-        // startChangeSpeedView(up, down)
-        // stopwatch.start()
+
+
+        binding.imageView2.visibility = View.VISIBLE
+        binding.imageView2.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.connectiong))
+        binding.tvStatus.text = "Connecting"
+        binding.tvTimer2.visibility = View.VISIBLE
+    }
+
+    fun showOnConnectedInterstitialAd() {
+        val adRequest = AdRequest.Builder().build()
+        InterstitialAd.load(
+            this,
+            "ca-app-pub-3940256099942544/1033173712",
+            adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.d("TAG ADS", adError.toString())
+                    mInterstitialAd = null
+                }
+
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    Log.d("TAG ADS", "Ad was loaded.")
+                    mInterstitialAd = interstitialAd
+                    if (mInterstitialAd != null) {
+                        mInterstitialAd?.show(this@MainActivity)
+                        startConnectionTimer()
+                        Observable.timer(500, TimeUnit.MILLISECONDS)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe {
+                                isStartClik = false
+                            }
+                        changeTheme(true)
+                    } else {
+                        Log.d("TAG", "The interstitial ad wasn't ready yet.")
+                    }
+                }
+            })
+    }
+
+    private fun showOnDisConnectedInterstitialAd() {
+        val adRequest = AdRequest.Builder().build()
+        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.d("TAG ADS", adError.toString())
+                    mInterstitialAd = null
+                }
+
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+
+                    Log.d("TAG ADS", "Ad was loaded.")
+                    mInterstitialAd = interstitialAd
+                    if (mInterstitialAd != null) {
+                        mInterstitialAd?.show(this@MainActivity)
+
+                        Observable.timer(100, TimeUnit.MILLISECONDS)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe {
+                                Utils.stopVService(this@MainActivity)
+                                changeTheme(false)
+                                shPref.edit().putInt("LastStart", 0).apply()
+                                isStartClik = true
+                            }
+
+                    } else {
+                        Log.d("TAG", "The interstitial ad wasn't ready yet.")
+                    }
+                }
+            })
     }
 
     private fun restartV2Ray() {
         if (mainViewModel.isRunning.value == true) {
             Utils.stopVService(this)
+        }
+        val service = V2RayServiceManager.serviceControl?.get()?.getService()
+        if (service != null) {
+            showOnConnectedInterstitialAd()
         }
         Observable.timer(500, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
             .subscribe {
@@ -574,7 +753,12 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     public override fun onResume() {
-        super.onResume()
+        Log.d("TAG", "onResume MainAC")
+        if (isStartClik) {
+            binding.tvWarning.visibility = View.GONE
+            binding.fab.isEnabled = true
+        }
+        super<BaseActivity>.onResume()
         if (leftRewardTime < 0) {
             Utils.stopVService(this)
         }
@@ -582,7 +766,7 @@ class MainActivity : BaseActivity(), SpeedListener,
     }
 
     public override fun onPause() {
-        super.onPause()
+        super<BaseActivity>.onPause()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -1061,10 +1245,11 @@ class MainActivity : BaseActivity(), SpeedListener,
     override fun onStop() {
         val timeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
         //mainStorage?.encode("outTime", timeStamp.toString())
-        shPref.edit().putLong("outTime", timeStamp).apply()
-        val lastStart = shPref.getLong("outTime", 0)
-        Log.d("TAG  OUT", lastStart.toString())
-        super.onStop()
+        //shPref.edit().putLong("outTime", timeStamp).apply()
+        // val lastStart = shPref.getLong("outTime", 0)
+        // Log.d("TAG  OUT", lastStart.toString())
+
+        super<BaseActivity>.onStop()
     }
 
 

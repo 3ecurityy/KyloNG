@@ -281,4 +281,8 @@
         watching the video Ad. Kylo also recommend you to watch several video Ad in a row,
         so that your time ends latter and you wont encounter any interruption during using kylo</string>
 <string name="ss" translatable="false"> &lt;font color="#FF0000">This  is colored in red &lt;/font> This is not</string>
+    <string name="do_not_close_kylo_until_its_connect" translatable="false">Do Not Close Kylo Until Its Connect</string>
+    <string name="do_not_close_kylo_until_its_disconnect" translatable="false">Do Not Close Kylo Until Its DisConnect</string>
+
+    <string name="disconnect" translatable="false">Disconnecting</string>
 </resources>

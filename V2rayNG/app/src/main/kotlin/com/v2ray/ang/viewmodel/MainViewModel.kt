@@ -19,6 +19,7 @@ import com.v2ray.ang.R
 import com.v2ray.ang.databinding.DialogConfigFilterBinding
 import com.v2ray.ang.dto.*
 import com.v2ray.ang.extension.toast
+import com.v2ray.ang.ui.MainActivity
 import com.v2ray.ang.util.*
 import com.v2ray.ang.util.MmkvManager.KEY_ANG_CONFIGS
 import kotlinx.coroutines.*
@@ -284,6 +285,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 AppConfig.MSG_STATE_START_FAILURE -> {
                     getApplication<AngApplication>().toast(R.string.toast_services_failure)
+
                     isRunning.value = false
                 }
 

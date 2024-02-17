@@ -158,9 +158,16 @@ dependencies {
 
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
 
-  //  implementation("androidx.compose.material3:material3:1.2.0")
+    //  implementation("androidx.compose.material3:material3:1.2.0")
 
     implementation 'com.google.android.gms:play-services-ads:22.6.0'
     implementation 'com.google.android.ump:user-messaging-platform:2.2.0'
+
+    implementation 'com.google.guava:guava:27.0.1-android'
+
+    implementation 'androidx.lifecycle:lifecycle-common:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
+
+    implementation 'com.airbnb.android:lottie:6.3.0'
 
 }

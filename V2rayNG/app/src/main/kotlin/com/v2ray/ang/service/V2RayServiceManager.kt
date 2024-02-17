@@ -145,8 +145,6 @@ object V2RayServiceManager {
         val guid = mainStorage?.decodeString(MmkvManager.KEY_SELECTED_SERVER) ?: return
         val config = MmkvManager.decodeServerConfig(guid) ?: return
 
-
-
         if (!v2rayPoint.isRunning) {
             val result = V2rayConfigUtil.getV2rayConfig(service, guid)
             if (!result.status)

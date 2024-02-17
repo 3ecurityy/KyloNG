@@ -63,7 +63,6 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
             holderMain = holder
 
 
-
             shPref = mActivity.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
             val sEdit = shPref.edit()
 
@@ -82,6 +81,8 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
                 for (i in 0 until itemList.size) {
                     if (itemList[i].getId().equals(mActivity.selectedItemUUId)) {
                         selectedPosition = i
+                        mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guid)
+                        break
                     }
                 }
             }
@@ -89,7 +90,10 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
 
             if (position == selectedPosition) {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_selected)
-                mainStorage.encode("UUID2", itemList[selectedPosition].getCountry() +" | "+ itemList[selectedPosition].getCity())
+                mainStorage.encode(
+                    "UUID2",
+                    itemList[selectedPosition].getCountry() + " | " + itemList[selectedPosition].getCity()
+                )
             } else {
                 holder.itemMainBinding.layoutIndicator.setBackgroundResource(R.drawable.item_unselected)
             }
@@ -105,7 +109,10 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
                         mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, guid)
                         // mainStorage?.encode("UUID", itemList[position].getId())
                         sEdit.putString("UUID", itemList[position].getId())
-                        mainStorage.encode("UUID2", itemList[position].getCountry() +" | "+ itemList[position].getCity())
+                        mainStorage.encode(
+                            "UUID2",
+                            itemList[position].getCountry() + " | " + itemList[position].getCity()
+                        )
                         sEdit.apply()
                         if (!TextUtils.isEmpty(selected)) {
                             notifyItemChanged(mActivity.mainViewModel.getPosition(selected!!))

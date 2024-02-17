@@ -271,6 +271,21 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+
+        <com.airbnb.lottie.LottieAnimationView
+
+            android:id="@+id/animationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@+id/imageViewSignal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageViewSignal"
+            app:lottie_autoPlay="false"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/j" />
+
         <ImageView
             android:id="@+id/imageViewSignal"
             android:layout_width="wrap_content"
@@ -293,7 +308,7 @@
             android:id="@+id/tv_status"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:fontFamily="@font/roboto_condensed"
             android:gravity="center"
             android:text="@string/not_connected"
@@ -303,6 +318,20 @@
             app:layout_constraintEnd_toEndOf="@+id/imageViewSignal"
             app:layout_constraintStart_toStartOf="@+id/imageViewSignal"
             app:layout_constraintTop_toBottomOf="@+id/imageViewSignal" />
+
+        <TextView
+            android:id="@+id/tv_warning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto_condensed"
+            android:gravity="center"
+            android:text="@string/do_not_close_kylo_until_its_connect"
+            android:textAlignment="center"
+            android:textColor="@color/redColor"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_status" />
 
         <ImageView
             android:id="@+id/imageView2"
@@ -366,6 +395,7 @@
         android:layout_height="130dp"
         android:layout_margin="8dp"
         android:background="@drawable/disconnect_btn_bg"
+        android:enabled="false"
         android:fontFamily="@font/roboto_condensed_bold"
         android:text="@string/btn_start"
         android:textColor="@color/white"
