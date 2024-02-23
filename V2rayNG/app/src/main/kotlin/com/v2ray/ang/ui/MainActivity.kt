@@ -27,13 +27,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.annotation.NonNull
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -70,6 +67,7 @@ import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.viewmodel.SubConfig
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.observers.DisposableObserver
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
 import ir.samanjafari.easycountdowntimer.CountDownInterface
@@ -128,9 +126,10 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private var mInterstitialAd: InterstitialAd? = null
 
+    private final var TAG = "MainActivity"
+
     enum class AppStart {
         FIRST_TIME, FIRST_TIME_VERSION, NORMAL
-
     }
 
     companion object {
@@ -140,13 +139,14 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private val LAST_APP_VERSION = "last_app_version"
     var selectedItemUUId = "A"
-    private var leftRewardTime = mainStorage.decodeInt("rewardTime")
+
+    //private var leftRewardTime = mainStorage.decodeInt("rewardTime")
+    private var leftRewardTime = 0
     private var baseRewardTime = 0
 
     lateinit var shPref: SharedPreferences
     val bundle = Bundle()
-    val modalBottomSheet = BottomSheet()
-
+    val modalBottomSheet = BottomSheet(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super<BaseActivity>.onCreate(savedInstanceState)
@@ -157,9 +157,14 @@ class MainActivity : BaseActivity(), SpeedListener,
         registerMsgReceiver()
         MobileAds.initialize(this)
 
+        binding.parentGasStation.isEnabled = false
+
+
+
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
         shPref = getSharedPreferences("MyPref", Context.MODE_PRIVATE);
+
         MmkvManager.removeAllServer()
         mainViewModel.serversCache.clear()
         mainViewModel.serverList.clear()
@@ -179,8 +184,10 @@ class MainActivity : BaseActivity(), SpeedListener,
             Utils.stopVService(this)
         }
 
+
         binding.fab.setOnClickListener {
-            if (leftRewardTime > 0) {
+            Log.d("TAG - getCurrentRewardTime", getCurrentRewardTime().toString())
+            if (getCurrentRewardTime() > 0) {
                 if (mainViewModel.isRunning.value == true) {
                     //Stop Timer
                     binding.tvTimer2.visibility = View.INVISIBLE
@@ -188,10 +195,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                     //Change Icon ImageView
                     binding.imageView2.visibility = View.VISIBLE
                     binding.imageView2.setImageDrawable(
-                        ContextCompat.getDrawable(
-                            this,
-                            R.drawable.connectiong
-                        )
+                        ContextCompat.getDrawable(this, R.drawable.connectiong)
                     )
 
                     binding.tvConnected.text = resources.getString(R.string.disconnect)
@@ -212,6 +216,7 @@ class MainActivity : BaseActivity(), SpeedListener,
                 val timeStart = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
                 Log.d("TAG", "Time Start $timeStart")
                 shPref.edit().putInt("LastStart", timeStart).apply()
+
             } else {
                 modalBottomSheet.show(supportFragmentManager, "ModalBottomSheet.TAG")
             }
@@ -222,8 +227,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         copyAssets()
         migrateLegacy()
         getPermissions()
-
-
 
         mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdClicked() {
@@ -254,6 +257,19 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
 
         // changeTheme(true)
+
+    }
+
+    //Get Current Real Reward Time
+    private fun getCurrentRewardTime(): Int {
+        return shPref.getInt("rewardTime", 0)
+    }
+
+    private fun updateRewardTime(value: Int) {
+        val sumRewardTime: Int
+        if (getCurrentRewardTime() > 0) {
+
+        }
 
     }
 
@@ -292,12 +308,13 @@ class MainActivity : BaseActivity(), SpeedListener,
 
     private val mMsgReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context?, intent: Intent?) {
-            when (intent?.getIntExtra("key", 0)) {
-                AppConfig.MSG_STATE_START_SUCCESS -> {
-                    showOnConnectedInterstitialAd()
-                    Log.d("TAG", "IS RUN")
+            if (!BottomSheet.itsFromBottomSheet)
+                when (intent?.getIntExtra("key", 0)) {
+                    AppConfig.MSG_STATE_START_SUCCESS -> {
+                        showOnConnectedInterstitialAd()
+                        Log.d("TAG", "IS RUN")
+                    }
                 }
-            }
         }
     }
 
@@ -340,10 +357,22 @@ class MainActivity : BaseActivity(), SpeedListener,
         val timeOutPr: Long = shPref.getLong("outTime", 0)
         Log.d("TAG : OC OUT", timeOutPr.toString())
 
-        val diffBetweenTwoTime = timeIn - timeOutPr
-        val getRealRewardTime = leftRewardTime - diffBetweenTwoTime
+        //Change It for when reward is expire and we want to test it :)
+        var diffBetweenTwoTime = 0L
+        var getRealRewardTime = 0L
+        if (shPref.getBoolean("startTimer", false)) {
+            //Dot nothing :)
+            getRealRewardTime = 900L
+        }else{
+            diffBetweenTwoTime  = timeIn - timeOutPr
+            getRealRewardTime = getCurrentRewardTime() - diffBetweenTwoTime
+        }
+
+
 
         bundle.putString("key", getRealRewardTime.toString())
+
+        shPref.edit().putInt("rewardTime", getRealRewardTime.toInt()).apply()
 
         Log.d("TAG : getRealRewardTime", leftRewardTime.toString())
 
@@ -363,30 +392,58 @@ class MainActivity : BaseActivity(), SpeedListener,
             getH(leftRewardTime.toLong()).toInt(),
             getMin(leftRewardTime.toLong()).toInt(),
             getSec(leftRewardTime.toLong()).toInt()
-
         )
         bundle.putString("key", leftRewardTime.toString())
     }
 
     private fun startTimer(h: Int, m: Int, s: Int) {
+
+        var baseRw = shPref.getInt("baseRewardInt", 0);
         val countDownTextview = findViewById<View>(R.id.tv_timer) as EasyCountDownTextview
         countDownTextview.setTime(0, h, m, s)
         countDownTextview.setOnTick(object : CountDownInterface {
             override fun onTick(time: Long) {
-                Log.d("TAG : startFirstTimer", (time / 1000).toString())
-                val lol = leftRewardTime - (time / 1000)
-                Log.d("TAG : startFirstTimer", lol.toString())
-                leftRewardTime -= lol.toInt()
-                mainStorage.encode("rewardTime", leftRewardTime)
-                Log.d("TAG : TTF", mainStorage.decodeInt("rewardTime").toString())
+                //   Log.d("TAG On Tick Rw", getCurrentRewardTime().toString())
+                //  Log.d("TAG On Tick Rw2", shPref.getInt("rewardTime2", 0).toString())
+                leftRewardTime = getCurrentRewardTime()
+
+                if (shPref.getBoolean("PlusReward", false)) {
+                    //updateRewardTime(rewardPlus)
+                    Log.d("TAG On Tick IF ", "IN IF")
+                    val sumRewardTime = getCurrentRewardTime() + baseRw
+                    leftRewardTime = sumRewardTime
+                    Log.d("TAG", "TAG On Tick LOL $sumRewardTime")
+                    Log.d("TAG", "TAG On Tick LOL2 $leftRewardTime")
+                    Log.d("TAG", "TAG On Tick LOL-A ${getCurrentRewardTime()}")
+                    shPref.edit().putInt("rewardTime", leftRewardTime).apply()
+                    Log.d("TAG", "TAG On Tick LOL-B ${getCurrentRewardTime()}")
+                    shPref.edit().putBoolean("PlusReward", false).apply()
+
+                    // shPref.edit().putInt("rewardTime2", 0).apply()
+                    //shPref.edit().putInt("rewardTime", leftRewardTime + rewardPlus).apply()
+                    // leftRewardTime += rewardPlus
+                }
+
+                val lol = (time / 1000)
+                Log.d("TAG", "TAG On Tick LOL-C ${getCurrentRewardTime()}")
+                Log.d("TAG", "TAG On Tick LOL-D $lol")
+                // leftRewardTime -= lol.toInt()
+                Log.d("TAG", "TAG On Tick LOL-F $leftRewardTime")
+                shPref.edit().putInt("rewardTime", leftRewardTime - 1).apply()
+                Log.d("TAG", "TAG On Tick LOL-B ${getCurrentRewardTime()}")
 
                 val time =
-                    getH(leftRewardTime.toLong()).toString() + "H" + " " + getMin(leftRewardTime.toLong()) + "M"
+                    getH(getCurrentRewardTime().toLong()).toString() + "H" + " " + getMin(
+                        getCurrentRewardTime().toLong()
+                    ) + "M"
+
+                shPref.edit().putString("time", time).apply()
                 binding.tvTimerReward.text = time
             }
 
             override fun onFinish() {
                 Utils.stopVService(this@MainActivity)
+                shPref.edit().putBoolean("rewardExpire", true).apply()
                 //V2RayServiceManager.stopV2rayPoint()
             }
         })
@@ -412,9 +469,9 @@ class MainActivity : BaseActivity(), SpeedListener,
     private fun getBaseData() {
         //  Log.i("TAG", "GET BASE DATA")
         val disposable: Disposable = getApi.GetConfig()
-            .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread()).subscribeOn(
-                Schedulers.io()
-            ).subscribeWith(object : DisposableSingleObserver<Response<ConfigResponse>>() {
+            .observeOn(io.reactivex.android.schedulers.AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .subscribeWith(object : DisposableSingleObserver<Response<ConfigResponse>>() {
                 override fun onSuccess(t: Response<ConfigResponse>) {
                     if (t.body() != null) {
                         settingsStorage?.encode("Verison", t.body()!!.version)
@@ -427,14 +484,21 @@ class MainActivity : BaseActivity(), SpeedListener,
                                         t.body()!!.subConfig[i].getConfig().toString()
                                     )
                                 }
-
                                 binding.parentLoading.fadeVisibility(View.GONE)
                                 initRecyclerview()
                             }
                         }
                     }
+
                     baseRewardTime = t.body()!!.rewardTime!!.toLong().toInt()
                     Log.d("TAG", "baseRewardTime $baseRewardTime")
+
+                    bundle.putInt("baseReward", baseRewardTime)
+                    shPref.edit().putInt("baseRewardInt", baseRewardTime).apply()
+
+                    modalBottomSheet.arguments = bundle
+                    binding.fab.isEnabled = true
+                    binding.parentGasStation.isEnabled = true
 
                     when (checkAppStart()) {
                         AppStart.NORMAL -> {
@@ -451,9 +515,6 @@ class MainActivity : BaseActivity(), SpeedListener,
 
                         else -> {}
                     }
-                    bundle.putInt("baseReward", baseRewardTime)
-                    modalBottomSheet.arguments = bundle
-                    binding.fab.isEnabled = true
 
                 }
 
@@ -598,20 +659,24 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
+
     private fun setupViewModel() {
         mainViewModel.isRunning.observe(this) { isRunning ->
             adapter.isRunning = isRunning
-            if (isRunning) {
-                running = true
+            if (!BottomSheet.itsFromBottomSheet) {
+                if (isRunning) {
+                    running = true
 
-                if (!isStartClik) {
+                    if (!isStartClik) {
+                        changeTheme(isRunning)
+                    }
+
+                } else {
+                    binding.tvStatus.text = "Not Connected"
                     changeTheme(isRunning)
                 }
-
-            } else {
-                binding.tvStatus.text = "Not Connected"
-                changeTheme(isRunning)
             }
+
         }
         mainViewModel.startListenBroadcast()
     }
@@ -744,7 +809,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
         val service = V2RayServiceManager.serviceControl?.get()?.getService()
         if (service != null) {
-            showOnConnectedInterstitialAd()
+            //why me do this???????????????
+            //showOnConnectedInterstitialAd()
         }
         Observable.timer(500, TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
             .subscribe {
@@ -762,6 +828,12 @@ class MainActivity : BaseActivity(), SpeedListener,
         if (leftRewardTime < 0) {
             Utils.stopVService(this)
         }
+
+        if (getCurrentRewardTime() > 0 && shPref.getBoolean("startTimer", false)) {
+            normalStart()
+            shPref.edit().putBoolean("startTimer", false).apply()
+        }
+
         mainViewModel.reloadServerList()
     }
 
@@ -1000,7 +1072,7 @@ class MainActivity : BaseActivity(), SpeedListener,
         }
     }
 
-    fun importConfigCustomClipboard(): Boolean {
+    private fun importConfigCustomClipboard(): Boolean {
         try {
             val configText = Utils.getClipboard(this)
             if (TextUtils.isEmpty(configText)) {

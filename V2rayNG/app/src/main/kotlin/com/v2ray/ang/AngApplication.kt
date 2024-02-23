@@ -9,8 +9,12 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
+import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.work.Configuration
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.database.AppDatabase
+import com.v2ray.ang.database.HandleRewardTime
 import com.v2ray.ang.ui.MainActivity
 import com.v2ray.ang.util.Utils
 import java.util.concurrent.TimeUnit
@@ -37,12 +41,16 @@ class AngApplication() : MultiDexApplication(),
     var firstRun = false
         private set
 
+
+    lateinit var db: AppDatabase
+
     @Override
     override fun onCreate() {
         super<MultiDexApplication>.onCreate()
         // ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 //        LeakCanary.install(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this);
+
 
         val defaultSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         firstRun = defaultSharedPreferences.getInt(PREF_LAST_VERSION, 0) != BuildConfig.VERSION_CODE
@@ -82,9 +90,11 @@ class AngApplication() : MultiDexApplication(),
         if (MainActivity.isStartClik) {
             Utils.stopVService(this)
         }
+        if (BottomSheet.itsFromBottomSheet) {
+            Utils.stopVService(this)
+        }
 
         val timeStamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
-        //mainStorage?.encode("outTime", timeStamp.toString())
         shPref.edit().putLong("outTime", timeStamp).apply()
         val lastStart = shPref.getLong("outTime", 0)
         Log.d("TAG  OUT", lastStart.toString())

@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
 }
 
 android {
@@ -158,6 +159,7 @@ dependencies {
 
     implementation 'androidx.lifecycle:lifecycle-process:2.7.0'
 
+
     //  implementation("androidx.compose.material3:material3:1.2.0")
 
     implementation 'com.google.android.gms:play-services-ads:22.6.0'
@@ -169,5 +171,12 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
 
     implementation 'com.airbnb.android:lottie:6.3.0'
+
+
+    //ROOM Database
+    def room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+    kapt ("androidx.room:room-compiler:2.6.1")
 
 }

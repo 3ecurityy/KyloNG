@@ -74,12 +74,14 @@
 
             <Button
                 android:id="@+id/button_ads"
-                android:layout_width="100dp"
+                android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="20dp"
+                android:padding="10dp"
                 android:background="@drawable/bottomsheet_button_stroke"
                 android:text="@string/watch_ad"
+
                 android:textColor="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
