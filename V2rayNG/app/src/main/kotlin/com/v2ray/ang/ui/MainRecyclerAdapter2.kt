@@ -66,6 +66,11 @@ class MainRecyclerAdapter2(val activity: MainActivity, private val itemList: Arr
             shPref = mActivity.getSharedPreferences("MyPref", Context.MODE_PRIVATE);
             val sEdit = shPref.edit()
 
+            if (shPref.getBoolean("selectPos0", false)) {
+                selectedPosition = 0
+                mainStorage?.encode(MmkvManager.KEY_SELECTED_SERVER, mActivity.mainViewModel.serversCache[0].guid)
+                sEdit.putBoolean("selectPos0", false).apply()
+            }
 
             setPadding(position)
             initData(position)

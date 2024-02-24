@@ -23,6 +23,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RatingBar
+import android.widget.RatingBar.OnRatingBarChangeListener
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -67,7 +69,6 @@ import com.v2ray.ang.viewmodel.MainViewModel
 import com.v2ray.ang.viewmodel.SubConfig
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
-import io.reactivex.observers.DisposableObserver
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
 import ir.samanjafari.easycountdowntimer.CountDownInterface
@@ -127,6 +128,8 @@ class MainActivity : BaseActivity(), SpeedListener,
     private var mInterstitialAd: InterstitialAd? = null
 
     private final var TAG = "MainActivity"
+    var shConnectionCount = "CONNECTION_COUNT"
+    var shUserSetRate = "USER_SET_RATE"
 
     enum class AppStart {
         FIRST_TIME, FIRST_TIME_VERSION, NORMAL
@@ -158,8 +161,6 @@ class MainActivity : BaseActivity(), SpeedListener,
         MobileAds.initialize(this)
 
         binding.parentGasStation.isEnabled = false
-
-
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
 
@@ -258,6 +259,38 @@ class MainActivity : BaseActivity(), SpeedListener,
 
         // changeTheme(true)
 
+
+        //For test DEsign Dialog
+        shPref.edit().putInt(shConnectionCount, 10).apply()
+        shPref.edit().putBoolean(shUserSetRate, false).apply()
+        handleUserRating()
+
+
+    }
+
+
+    private fun handleUserRating() {
+        if (shPref.getInt(shConnectionCount, 0) > 5 && !shPref.getBoolean(shUserSetRate, false)) {
+            val dialogBuilder = AlertDialog.Builder(this)
+            val dialogView = layoutInflater.inflate(R.layout.view_dialog_rating, null)
+            dialogBuilder.setView(dialogView)
+            val rating = dialogView.findViewById<RatingBar>(R.id.myRatingBar)
+            rating.onRatingBarChangeListener =
+                OnRatingBarChangeListener { ratingBar, value, fromUser ->
+                    shPref.edit().putInt(shConnectionCount, 0).apply()
+                    if (value >= 4) {
+                        shPref.edit().putBoolean(shUserSetRate, true).apply()
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.setData(Uri.parse("https://play.google.com/store/apps/details?id=com.v2ray.ang"))
+                        intent.setPackage("com.android.vending")
+                        startActivity(intent)
+                    } else {
+                        finish()
+                    }
+                }
+            val alertDialog = dialogBuilder.create()
+            alertDialog.show()
+        }
     }
 
     //Get Current Real Reward Time
@@ -312,6 +345,10 @@ class MainActivity : BaseActivity(), SpeedListener,
                 when (intent?.getIntExtra("key", 0)) {
                     AppConfig.MSG_STATE_START_SUCCESS -> {
                         showOnConnectedInterstitialAd()
+
+                        val lastCount = shPref.getInt(shConnectionCount, 0)
+                        shPref.edit().putInt(shConnectionCount, lastCount + 1).apply()
+
                         Log.d("TAG", "IS RUN")
                     }
                 }
@@ -363,8 +400,8 @@ class MainActivity : BaseActivity(), SpeedListener,
         if (shPref.getBoolean("startTimer", false)) {
             //Dot nothing :)
             getRealRewardTime = 900L
-        }else{
-            diffBetweenTwoTime  = timeIn - timeOutPr
+        } else {
+            diffBetweenTwoTime = timeIn - timeOutPr
             getRealRewardTime = getCurrentRewardTime() - diffBetweenTwoTime
         }
 
@@ -511,6 +548,9 @@ class MainActivity : BaseActivity(), SpeedListener,
 
                         AppStart.FIRST_TIME -> {
                             firstTimeStart()
+                            shPref.edit().putBoolean(shUserSetRate, false).apply()
+                            shPref.edit().putInt(shConnectionCount, 0).apply()
+                            shPref.edit().putBoolean("selectPos0", true).apply()
                         }
 
                         else -> {}
@@ -832,6 +872,10 @@ class MainActivity : BaseActivity(), SpeedListener,
         if (getCurrentRewardTime() > 0 && shPref.getBoolean("startTimer", false)) {
             normalStart()
             shPref.edit().putBoolean("startTimer", false).apply()
+        }
+
+        if (mainViewModel.isRunning.value == true) {
+            handleUserRating()
         }
 
         mainViewModel.reloadServerList()
