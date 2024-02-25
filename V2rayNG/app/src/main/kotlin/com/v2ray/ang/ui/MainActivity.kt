@@ -548,6 +548,7 @@ class MainActivity : BaseActivity(), SpeedListener,
 
                         AppStart.FIRST_TIME -> {
                             firstTimeStart()
+                            shPref.edit().putInt("rewardTime", baseRewardTime).apply()
                             shPref.edit().putBoolean(shUserSetRate, false).apply()
                             shPref.edit().putInt(shConnectionCount, 0).apply()
                             shPref.edit().putBoolean("selectPos0", true).apply()
